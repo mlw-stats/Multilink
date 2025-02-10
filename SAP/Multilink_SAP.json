@@ -1,0 +1,425 @@
+[
+	{
+		"id": "vanBuurenGroothuisOudshoorn2011",
+		"type": "article-journal",
+		"container-title": "Journal of Statistical Software",
+		"DOI": "10.18637/jss.v045.i03",
+		"ISSN": "1548-7660",
+		"issue": "3",
+		"journalAbbreviation": "J. Stat. Soft.",
+		"language": "en",
+		"source": "DOI.org (Crossref)",
+		"title": "<b>mice</b> : Multivariate Imputation by Chained Equations in <i>R</i>",
+		"title-short": "<b>mice</b>",
+		"URL": "http://www.jstatsoft.org/v45/i03/",
+		"volume": "45",
+		"author": [
+			{
+				"family": "Buuren",
+				"given": "Stef",
+				"non-dropping-particle": "van"
+			},
+			{
+				"family": "Groothuis-Oudshoorn",
+				"given": "Karin"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2023",
+					9,
+					22
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2011"
+				]
+			]
+		}
+	},
+	{
+		"id": "schulz_etal2010",
+		"type": "article-journal",
+		"abstract": "The CONSORT statement is used worldwide to improve the reporting of randomised controlled trials. Kenneth Schulz and colleagues describe the latest version, CONSORT 2010, which updates the reporting guideline based on new methodological evidence and accumulating experience. To encourage dissemination of the CONSORT 2010 Statement, this article is freely accessible on bmj.com and will also be published in the Lancet, Obstetrics and Gynecology, PLoS Medicine, Annals of Internal Medicine, Open Medicine, Journal of Clinical Epidemiology, BMC Medicine, and Trials.",
+		"container-title": "Trials",
+		"DOI": "10.1186/1745-6215-11-32",
+		"ISSN": "1745-6215",
+		"journalAbbreviation": "Trials",
+		"language": "eng",
+		"note": "PMID: 20334632\nPMCID: PMC2857832",
+		"page": "32",
+		"source": "PubMed",
+		"title": "CONSORT 2010 Statement: updated guidelines for reporting parallel group randomised trials",
+		"title-short": "CONSORT 2010 Statement",
+		"volume": "11",
+		"author": [
+			{
+				"family": "Schulz",
+				"given": "Kenneth F."
+			},
+			{
+				"family": "Altman",
+				"given": "Douglas G."
+			},
+			{
+				"family": "Moher",
+				"given": "David"
+			},
+			{
+				"literal": "CONSORT Group"
+			}
+		],
+		"issued": {
+			"date-parts": [
+				[
+					"2010",
+					3,
+					24
+				]
+			]
+		}
+	},
+	{
+		"id": "campbell_etal2012",
+		"type": "article-journal",
+		"container-title": "BMJ",
+		"DOI": "10.1136/bmj.e5661",
+		"ISSN": "1756-1833",
+		"issue": "sep04 1",
+		"journalAbbreviation": "BMJ",
+		"language": "en",
+		"page": "e5661-e5661",
+		"source": "DOI.org (Crossref)",
+		"title": "Consort 2010 statement: extension to cluster randomised trials",
+		"title-short": "Consort 2010 statement",
+		"URL": "https://www.bmj.com/lookup/doi/10.1136/bmj.e5661",
+		"volume": "345",
+		"author": [
+			{
+				"family": "Campbell",
+				"given": "M. K."
+			},
+			{
+				"family": "Piaggio",
+				"given": "G."
+			},
+			{
+				"family": "Elbourne",
+				"given": "D. R."
+			},
+			{
+				"family": "Altman",
+				"given": "D. G."
+			},
+			{
+				"literal": "for the CONSORT Group"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2024",
+					1,
+					23
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2012",
+					9,
+					4
+				]
+			]
+		}
+	},
+	{
+		"id": "loudon_etal2015",
+		"type": "article-journal",
+		"container-title": "BMJ",
+		"DOI": "10.1136/bmj.h2147",
+		"ISSN": "1756-1833",
+		"issue": "may08 1",
+		"journalAbbreviation": "BMJ",
+		"language": "en",
+		"page": "h2147-h2147",
+		"source": "DOI.org (Crossref)",
+		"title": "The PRECIS-2 tool: designing trials that are fit for purpose",
+		"title-short": "The PRECIS-2 tool",
+		"URL": "https://www.bmj.com/lookup/doi/10.1136/bmj.h2147",
+		"volume": "350",
+		"author": [
+			{
+				"family": "Loudon",
+				"given": "K."
+			},
+			{
+				"family": "Treweek",
+				"given": "S."
+			},
+			{
+				"family": "Sullivan",
+				"given": "F."
+			},
+			{
+				"family": "Donnan",
+				"given": "P."
+			},
+			{
+				"family": "Thorpe",
+				"given": "K. E."
+			},
+			{
+				"family": "Zwarenstein",
+				"given": "M."
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2024",
+					1,
+					23
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2015",
+					5,
+					8
+				]
+			]
+		}
+	},
+	{
+		"id": "finkelsteinSchoenfeld1999",
+		"type": "article-journal",
+		"container-title": "Statistics in Medicine",
+		"DOI": "10.1002/(SICI)1097-0258(19990615)18:11<1341::AID-SIM129>3.0.CO;2-7",
+		"ISSN": "0277-6715, 1097-0258",
+		"issue": "11",
+		"journalAbbreviation": "Statist. Med.",
+		"language": "en",
+		"page": "1341-1354",
+		"source": "DOI.org (Crossref)",
+		"title": "Combining mortality and longitudinal measures in clinical trials",
+		"URL": "https://onlinelibrary.wiley.com/doi/10.1002/(SICI)1097-0258(19990615)18:11<1341::AID-SIM129>3.0.CO;2-7",
+		"volume": "18",
+		"author": [
+			{
+				"family": "Finkelstein",
+				"given": "Dianne M."
+			},
+			{
+				"family": "Schoenfeld",
+				"given": "David A."
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2024",
+					2,
+					1
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"1999",
+					6,
+					15
+				]
+			]
+		}
+	},
+	{
+		"id": "pocock_etal2012",
+		"type": "article-journal",
+		"container-title": "European Heart Journal",
+		"DOI": "10.1093/eurheartj/ehr352",
+		"ISSN": "0195-668X, 1522-9645",
+		"issue": "2",
+		"journalAbbreviation": "European Heart Journal",
+		"language": "en",
+		"page": "176-182",
+		"source": "DOI.org (Crossref)",
+		"title": "The win ratio: a new approach to the analysis of composite endpoints in clinical trials based on clinical priorities",
+		"title-short": "The win ratio",
+		"URL": "https://academic.oup.com/eurheartj/article-lookup/doi/10.1093/eurheartj/ehr352",
+		"volume": "33",
+		"author": [
+			{
+				"family": "Pocock",
+				"given": "S. J."
+			},
+			{
+				"family": "Ariti",
+				"given": "C. A."
+			},
+			{
+				"family": "Collier",
+				"given": "T. J."
+			},
+			{
+				"family": "Wang",
+				"given": "D."
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2024",
+					2,
+					1
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2012",
+					1,
+					2
+				]
+			]
+		}
+	},
+	{
+		"id": "zhang_jeong2021",
+		"type": "article-journal",
+		"container-title": "Japanese Journal of Statistics and Data Science",
+		"DOI": "10.1007/s42081-021-00131-1",
+		"ISSN": "2520-8756, 2520-8764",
+		"issue": "2",
+		"journalAbbreviation": "Jpn J Stat Data Sci",
+		"language": "en",
+		"page": "1263-1292",
+		"source": "DOI.org (Crossref)",
+		"title": "Inference on win ratio for cluster-randomized semi-competing risk data",
+		"URL": "https://link.springer.com/10.1007/s42081-021-00131-1",
+		"volume": "4",
+		"author": [
+			{
+				"family": "Zhang",
+				"given": "Di"
+			},
+			{
+				"family": "Jeong",
+				"given": "Jong-Hyeon"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2024",
+					2,
+					2
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2021",
+					12
+				]
+			]
+		}
+	},
+	{
+		"id": "luo_etal2015",
+		"type": "article-journal",
+		"abstract": "Summary\n            Pocock et al. (2012, European Heart Journal  33, 176–182) proposed a win ratio approach to analyzing composite endpoints comprised of outcomes with different clinical priorities. In this article, we establish a statistical framework for this approach. We derive the null hypothesis and propose a closed-form variance estimator for the win ratio statistic in all pairwise matching situation. Our simulation study shows that the proposed variance estimator performs well regardless of the magnitude of treatment effect size and the type of the joint distribution of the outcomes.",
+		"container-title": "Biometrics",
+		"DOI": "10.1111/biom.12225",
+		"ISSN": "0006-341X, 1541-0420",
+		"issue": "1",
+		"language": "en",
+		"page": "139-145",
+		"source": "DOI.org (Crossref)",
+		"title": "An Alternative Approach to Confidence Interval Estimation for the Win Ratio Statistic",
+		"URL": "https://academic.oup.com/biometrics/article/71/1/139-145/7511470",
+		"volume": "71",
+		"author": [
+			{
+				"family": "Luo",
+				"given": "Xiaodong"
+			},
+			{
+				"family": "Tian",
+				"given": "Hong"
+			},
+			{
+				"family": "Mohanty",
+				"given": "Surya"
+			},
+			{
+				"family": "Tsai",
+				"given": "Wei Yann"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2024",
+					2,
+					2
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2015",
+					3,
+					1
+				]
+			]
+		}
+	},
+	{
+		"id": "Ord1967",
+		"type": "article-journal",
+		"container-title": "Journal of the Royal Statistical Society. Series A (General)",
+		"DOI": "10.2307/2343403",
+		"ISSN": "00359238",
+		"issue": "2",
+		"journalAbbreviation": "Journal of the Royal Statistical Society. Series A (General)",
+		"page": "232",
+		"source": "DOI.org (Crossref)",
+		"title": "Graphical Methods for a Class of Discrete Distributions",
+		"URL": "https://www.jstor.org/stable/10.2307/2343403?origin=crossref",
+		"volume": "130",
+		"author": [
+			{
+				"family": "Ord",
+				"given": "J. K."
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2024",
+					10,
+					3
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"1967"
+				]
+			]
+		}
+	}
+]

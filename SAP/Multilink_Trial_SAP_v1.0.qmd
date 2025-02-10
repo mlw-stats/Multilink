@@ -1,0 +1,2044 @@
+---
+title: "Multilink Trial - Statistical Analysis Plan v1.0"
+author: "Vester Gunsaru, Evaristar Kudowa, Sarah White, Marc Henrion"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+format:
+  html:
+    embed-resources: true
+    code-fold: true
+    code-summary: "Show the code"
+    toc: true
+    toc-depth: 3
+    fig-width: 8
+    fig-height: 6
+execute:
+  echo: true
+  warning: false
+  error: false
+  message: false
+bibliography: Multilink_SAP.json
+---
+
+```{r setup}
+#| include: false
+
+library(tidyverse)
+library(kableExtra)
+library(knitr)
+library(grid)
+library(gridExtra)
+library(table1)
+library(lme4)
+library(survival)
+library(survminer)
+library(finalfit)
+library(car)
+library(influence.ME)
+library(cWR)
+library(extraDistr)
+library(gtsummary)
+library(MASS)
+library(vcd)
+```
+
+# Full study title
+
+Multimorbidity-associated emergency hospital admissions: a “screen and link” strategy to improve outcomes for high-risk patients in Malawi and Tanzania.
+
+# SAP Version History
+
+```{r}
+#| label: tbl-versionHistory
+#| tbl-cap: Version history listing major changes for each new version.
+
+dfVersion<-data.frame(matrix(ncol=3,nrow=0, dimnames=list(NULL, c("Version", "Date", "Description"))))
+
+dfVersion[nrow(dfVersion)+1,]<-c("v1.0","2025-02-03","Updated SAP version to v1.0")
+dfVersion[nrow(dfVersion)+1,]<-c("v0.21","2025-01-20","Updated category levels for measures of disease control")
+dfVersion[nrow(dfVersion)+1,]<-c("v0.20","2025-01-09","Updated patient characteristics table to capture deaths and readmissions separately; added secondary analyses on logistic models for measures of disease control and end-organ complications; amended win ratio code to reflect only those who received intervention are the ones treated as treament participants; amended win ratio text to clarify the data being used; updated CONSORT diagram; updated figure and table lists.")
+dfVersion[nrow(dfVersion)+1,]<-c("v0.19","2025-01-02","Further typo corrections; amendement of the secondary analyses summary; added offset term to GLMM model equation; changed how age is centered and using centered age in the Cox PH model; amended the stated date of protocol v4.0; several comments for Vester to work on; added DMP version number and date.")
+dfVersion[nrow(dfVersion)+1,]<-c("v0.18","2024-12-18","Amended texts and typos; updated protocol version; updated primary analysis model variables; updated patient characteristics.")
+dfVersion[nrow(dfVersion)+1,]<-c("v0.17","2024-12-03","Combined summary tables (intervention and control arms still shown separately but on the same table); updated before/after, within cluster analyses, amended re-admission stratified model to a negative binomial model.")
+dfVersion[nrow(dfVersion)+1,]<-c("v0.16","2024-11-15","Combined summary tables and graphs (intervention and control arms still shown separately but on the same table/graph); slight change to notation for regression model equations; revised model diagnostics for the negative binomial GLMM model; amended linearity check for the mixed logistic regression model; included study period and study arm X study period interaction terms into all secondary analysis models; corrected the calculation of the win ratio CI.")
+dfVersion[nrow(dfVersion)+1,]<-c("v0.15","2024-09-24","Updated secondary analyses: added details on within-cluster analyses, prevalence of undiagnosed multimorbidity, measures of disease control, prevalence of end-organ compications relevant to primary disease and disability free survival at 90 days; updated figure and table lists.")
+dfVersion[nrow(dfVersion)+1,]<-c("v0.14","2024-08-13","Updated simulated data to include the baseline period; updated primary analyses: added model equation, null and alternative hypothesis, model analysis, model diagnostics; updated secondary analyses: added win ratio analysis; updated figure and table lists.")
+dfVersion[nrow(dfVersion)+1,]<-c("v0.13","2024-05-31","Cleaned up sample size section removing previous, now irrelevant parts and added more detailed numbers for the recommended scenario.")
+dfVersion[nrow(dfVersion)+1,]<-c("v0.12","2024-05-24","Included baseline period in design and revised sample size section.")
+dfVersion[nrow(dfVersion)+1,]<-c("v0.11","2024-04-23","Updates to the sample size calculation: adding worst case scenario based on cohort study estimates as well as further investigations of the effect of ICC and dispersion; included text related to interim analysis.")
+dfVersion[nrow(dfVersion)+1,]<-c("v0.10","2024-03-18","Updates to the sample size calculation: adding an 11th site per arm, accounting for 15% LTFU")
+dfVersion[nrow(dfVersion)+1,]<-c("v0.9","2024-02-28","Change of primary model to count model; revised sample size calculation after agreement with principal investigators")
+dfVersion[nrow(dfVersion)+1,]<-c("v0.8","2024-02-20","Revised CONSORT diagram; Added model diagnostics for mixed effects logistic regression; additional sample size calculation scenarios for discussion")
+dfVersion[nrow(dfVersion)+1,]<-c("v0.7","2024-02-12","Minor edits and corrections, including reporting considerations, reporting of random effects / frailties, clarification how patients dying without re-admission are handled in the stratified by outcome analysis.")
+dfVersion[nrow(dfVersion)+1,]<-c("v0.6","2024-02-01","Version history added; win ratio details added.")
+dfVersion[nrow(dfVersion)+1,]<-c("v0.5","2024-01-31","Simulation updated to reflect database variable names and coding. Trial registration info added.")
+dfVersion[nrow(dfVersion)+1,]<-c("v0.4","2024-01-19","Revised CONSORT diagram and reference; frailty term for time-to-event analysis; PRECIS-2 trial design summary.")
+dfVersion[nrow(dfVersion)+1,]<-c("v0.3","2024-01-11","Primary and secondary analyses added.")
+dfVersion[nrow(dfVersion)+1,]<-c("v0.2","2023-12-18","Protocol summary and sample size calculation added; data simulation code written.")
+dfVersion[nrow(dfVersion)+1,]<-c("v0.1","2023-12-15","First draft of the SAP; largely just a skeleton with all sections in place.")
+
+dfVersion %>%
+  kable() %>%
+  kable_styling(full_width = FALSE)
+```
+
+# Trial registry
+
+Pan African Clinical Trials Registry (PACTR) **PACTR202310588244868**.
+
+# Protocol version
+
+This Statistical Analysis Plan (SAP) v1.0 is based on Protocol v4.0, dated 20 June 2024.
+
+# List of abbreviations
+
+@tbl-abbr lists all abbreviations used throughout this document.
+
+```{r abbr}
+#| echo: false
+#| label: tbl-abbr
+#| tbl-cap: "List of abbreviations"
+
+dfAbbr<-data.frame(
+  abbr=c("eCRF","AE","AR","SAE","SAR","SUSAR","GLMM","PH", "HIV", "WHO", "HBA1c", "DMP", "SAP", "IDA", "IQR", "CI", "SD", "P25", "P75", "N", "n", "ITT", "MICE", "FCS", "LTFU", "PACTR","ICC","DSMB","TSC","CV"),
+  details=c("Electronic Case report form","Adverse event","Adverse reaction","Serious adverse event","Serious adverse reaction","Suspected unexpected serious adverse reaction","Generalised linear mixed model","Proportional hazards", "Human immunodeficiency virus", "World Health Organization", "Haemoglobin A1c", "Data management plan", "Statistical analysis plan", "Initial data analysis", "Interquartile range", "Confidence interval", "Standard deviation", "25th percentile value", "75th percentile value", "Size of relevant analysis population", "Size of analysis population without missing values", "Intention-to-treat", "Multiple imputation using chained equations", "Fully conditional specification", "Loss to follow-up", "Pan African Crinical Trials Registry","Intra-class correlation coefficient","Data and Safety Monitoring Board","Trial Steering Committee","Coefficient of variation")
+)
+
+dfAbbr<-dfAbbr[order(dfAbbr$abbr),]
+
+dfAbbr %>%
+  kable(row.names=F,col.names=c("Abbreviation","Explanation")) %>%
+  kable_styling(full_width=FALSE)
+```
+
+# Protocol summary
+
+## Study design
+
+An open-label, two-arm cluster randomized controlled trial with a baseline period conducted across district-level hospitals in Malawi and Tanzania. Randomization will be at the hospital level, with twenty-two clusters / sites in total (11 per arm; 6 per arm in Tanzania, 5 per arm in Malawi).
+
+### Intervention
+
+The intervention is a package with the following components:
+
+1.  Enhanced diagnostics to assess presence and control of diabetes, hypertension and HIV.
+
+2.  Protocolised treatment recommendation based on WHO and relevant national treatment guidelines; informed by disease control; and renal function (serum creatinine).
+
+3.  Enhanced training for healthcare workers to promote/facilitate adoption of enhanced diagnostics and acceptance of protocolised treatment and to guide appropriate clinical approaches for participants who fall outside of specific algorithmic recommendations.
+
+4.  Outpatient clinic visits one and two months after hospital discharge to monitor and titrate treatment for improved disease control.
+
+5.  Enhanced linkage to community support (which we will also aim to train/strengthen) and other services.
+
+6.  Supporting self-management (including improved health literacy and empowerment for patients to take control of their conditions).
+
+For further details on the specific design adopted here, i.e. a parallel-arm with baseline period cluster randomised design, please refer to <https://doi.org/10.1136/bmj.h2925>.
+
+### Standard of care
+
+Recruited participants will receive enhanced diagnostics to determine presence and control of selected diseases (diabetes mellitus, hypertension and HIV-infection), including serum creatinine, at recruitment and subsequently at 90-day follow up clinic.
+
+### Inclusion criteria
+
+-   Adults (≥18) acutely admitted to hospital with a medical presentation.
+
+-   Diagnosed with ≥2 of diabetes mellitus, hypertension and HIV-infection.
+
+### Study Endpoints
+
+**Primary endpoint** Composite event count of readmission and/or death within the 90 day follow up period.
+
+**Secondary endpoints**
+
+Clinical
+
+1.  Disaggregated primary outcome: mortality and readmission at 90 days.
+2.  Prevalence of undiagnosed multimorbidity.
+3.  Measures of disease control (e.g. blood pressure, HBA1c, HIV viraemia).
+4.  Prevalence of end-organ complications relevant to primary disease (e.g., stroke, myocardial infarction, chronic kidney disease).
+5.  Disability free survival at 90 days.
+
+### Summary of the study design - PRECIS-2
+
+We aimed to summarise the trial design in terms of how pragmatic or explanatory the trial is designed to be, using the PRECIS-2 wheel [@loudon_etal2015]. This tool scores the trial design in 9 domains, from 1 (very explanatory) to 5 (very pragmatic).
+
+Our (informal) PRECIS-2 assessment for the Multilink trial are shown in @fig-precis.
+
+```{r}
+#| label: fig-precis
+#| fig-width: 8
+#| fig-height: 8
+#| fig-cap: PRECIS-2 wheel assessment of the Multilink trial. Individual scores range from 1 (very explanatory / analytical) to 5 (very pragmatic).
+
+library(fmsb)
+
+# setting up the data frame
+precisDf<-data.frame(
+  Eligibility=c(5,1,NA),
+  Recruitment=c(5,1,NA),
+  Setting=c(5,1,NA),
+  Organisation=c(5,1,NA),
+  Flexibility_Delivery=c(5,1,NA),
+  Flexibility_Adherence=c(5,1,NA),
+  Follow__Up=c(5,1,NA),
+  Primary_Outcome=c(5,1,NA),
+  Primary_Analysis=c(5,1,NA)
+)
+rownames(precisDf)<-c("max","min","score")
+
+
+# scoring the Multlink trial
+precisDf$Eligibility[3]<-3 # participants required to be contactable and live within catchment area of hospital
+precisDf$Recruitment[3]<-5 # no extra effort; recruits directly patients showing up
+precisDf$Setting[3]<-3 # only district hospitals included; faith-based and specialised clinics excluded
+precisDf$Organisation[3]<-3 # enhanced diagnostic information (needed for recruitment) available to treatment teams
+precisDf$Flexibility_Delivery[3]<-2 # same treatment guidelines and training across all sites; no allowance for sites to adapt intervention packages (but package measures were co-created before trial so should be feasible and acceptable across sites)
+precisDf$Flexibility_Adherence[3]<-4 # physicians are meant to follow the adapted treatment guidelines but will have ultimate authority on treatment so this allows for flexibility between sites; no explicit checking on implementation or excluding sites if deviating; also flexibility on study visit appointment dates
+precisDf$Follow__Up[3]<-2 # follow-up much stricter than for usual care setting with follow-up after discharge; some flexibility on visit dates (+- 10 days)
+precisDf$Primary_Outcome[3]<-5 # re-admission/death of obvious, immediate relevance to participants
+precisDf$Primary_Analysis[3]<-4 # intention-to-treat analysis; all participants included though some may become ineligible at a later timepoint and would be removed from analysis
+
+colnames(precisDf)<-gsub(colnames(precisDf),pattern="__",replacement="-")
+colnames(precisDf)<-gsub(colnames(precisDf),pattern="_",replacement="\n")
+
+# plotting the wheel using a radar plot
+radarchart(precisDf,axistype=1 , 
+           #custom polygon
+           pcol=rgb(0.2,0.5,0.5,0.9) , pfcol=rgb(0.2,0.5,0.5,0.5) , plwd=4 , 
+           
+           #custom the grid
+           cglcol="grey", cglty=1, axislabcol="grey", caxislabels=seq(1,5,by=1), cglwd=0.8,
+           
+           #custom labels
+           vlcex=1.4 
+)
+```
+
+The rationale for the above scoring is given in @tbl-precis.
+
+```{r}
+#| label: tbl-precis
+#| tbl-cap: "PRECIS-2 scoring rationale for the Multilink trial. Individual scores range from 1 (very explanatory / analytical) to 5 (very pragmatic)."
+
+precisDfKable<-data.frame(
+  category=gsub(pattern="\n",replacement=" ",colnames(precisDf)),
+  score=unlist(precisDf["score",]),
+  rationale=c(
+    "Participants required to be contactable and live within catchment area of hospital.",
+    "No extra recruitment effors; the trial recruits directly eligible patients showing up at the participating sites.",
+    "Only district hospitals are included; faith-based and specialised clinics excluded.",
+    "Enhanced diagnostic information (needed for recruitment) available to treatment teams.",
+    "Same treatment guidelines and training across all sites; no allowance for sites to adapt intervention packages (but package measures were co-created before trial so should be feasible and acceptable across sites).",
+    "Physicians are meant to follow the adapted treatment guidelines but will have ultimate authority on treatment so this allows for flexibility between sites; no explicit checking on implementation or excluding sites if deviating; also flexibility on study visit appointment dates.",
+    "Follow-up much stricter than for usual care setting with follow-up after discharge; some flexibility on visit dates (+- 10 days).",
+    "Re-admission/death event count outcome is of obvious, immediate relevance to participants.",
+    "Intention-to-treat analysis; all participants included though some may become ineligible at a later timepoint and would be removed from analysis."
+  )
+)
+
+precisDfKable %>%
+  kable(row.names = FALSE) %>%
+  kable_styling(full_width = FALSE)
+```
+
+## Initial data analysis
+
+Data will only be analysed once the data have been locked in accordance with the final Multilink Data Management Plan (DMP) v1.0, dated 14 October 2024. Before the main analysis outlined in this SAP, the data will be downloaded from the server and prepared for analysis, relevant data tables will be merged, data will be reformatted as required for the code contained in the SAP, data will be screened to understand the properties of the data and identification of potential issues. An IDA report will be shared with the trial team and appropriate steps may be taken in accordance with the DMP.
+
+## Sample size
+
+The study enrolls **4,180 individuals** in **2 phases** (baseline and parallel arm \[intervention/control\] periods) across **22 hospitals** (clusters) with 95 individuals recruited per cluster per period ($4180=95\cdot 2\cdot 22$).
+
+## Objectives
+
+*Main objective*
+
+To compare the combined death and hospital re-admission rate for 90 days after index admission between intervention and standard cluster arms.
+
+*Secondary objectives*
+
+Secondary objectives aim to compare the intervention and standard of care arms with respect to:
+
+1.  Re-admission free survival at day 90 after index hospital admission.
+
+2.  Survival 90 days after index hospital admission.
+
+3.  Hospital re-admission rate 90 days after index hospital admission.
+
+4.  Prevalence of undiagnosed multimorbidity.
+
+5.  Measures of and change in disease control (e.g. blood pressure, HBA1c, HIV viraemia).
+
+6.  Prevalence of new end-organ complications relevant to primary disease.
+
+7.  Disability free survival at 90 days.
+
+# Sample size
+
+Sample size calculations were performed for the primary outcome on a count outcome scale, using the [R shiny app](https://clusterrcts.shinyapps.io/rshinyapp/) developed by Karla Hemming and colleagues, please also refer to <https://doi.org/10.1093/ije/dyz237>.
+
+## Assumptions
+
+-   Count outcome, counting re-admissions and deaths at 90 days (assumed rate in controls: 0.459 events per participant; based on cohort study data).
+-   11 facilities per arm (6 per arm in Tanzania, 5 per arm in Malawi).
+-   80 participants per facility (on average and after LTFU; CV 0.12; for justification see further below).
+-   Intra-class correlation coefficient (ICC) $\rho = 0.05$.
+-   Minimum effect size: 30% reduction in event rate (from 0.459 events per participant to 0.322).
+-   Target power: 90%.
+-   LTFU / attrition: 15%.
+-   Poisson count model (i.e. dispersion parameter = 1.1).
+-   Parallel arm design with a baseline period.
+
+## Calculation
+
+With these assumptions, the trial will be powered to detect relative decrease in the composite endpoint of at least 30% in the intervention arm with **90.4% power** (see black ICC 0.05 curve at cluster size 80 on @fig-sampSize-revCount).
+
+The event rate of 0.459 events/participant is derived from preliminary Multilink cohort study data from February 2024 (and is equivalent, under a standard Poisson model, to 36.8% of participant experiencing at least 1 event over 90 days: $P(X\geq1|X\sim Pois(\lambda=0.459))=0.368$). The intervention rate of 0.322 events/participants is obtained by assuming a 25% drop in the proportion of participants experiencing at least 1 event (and corresponds to 27.5% participants experiencing at least 1 event $P(X\geq1|X\sim Pois(\lambda=0.322))=0.275$).
+
+There are limited data for us to base the assumed value of the ICC on. For this reason we assumed a general value of 0.05, but computed power curves also for 0.02 and 0.08 (see @fig-sampSize-revCount, red \[0.02\] and blue \[0.08\] curves).
+
+To allow a bit of buffer in our assumptions, we were conservative in some aspects of the calculation and have an option to include longer follow-up time for some participants. Specifically:
+
+-   We accounted for the need for a small sample adjustment given the relatively small number of clusters (11) in each arm.
+
+-   We accounted for a variable cluster size, assuming a coefficient of variation (CV) of 0.12.
+
+-   We assumed an over-dispersion parameter value of 1.1.
+
+-   We accounted for LTFU of 15% and plan to recruit 95 participants per facility, to guarantee day 90 outcomes to be known for 80 participants. As we will also use the data for those participants that get lost to follow-up (for the time they were observed), our actual power will be slightly higher than the 90.4% quoted above. In the calculation we conservatively assume that LTFU participants will not contribute any data.
+
+-   We targeted 90% power - to leave some buffer to still have good power (\>80%) if some of our sample size calculation assumptions should turn out to have been incorrect.
+
+![Sample size calculation graph; produced using https://clusterrcts.shinyapps.io/rshinyapp/. This calculation assumes variable cluster size and a small sample adjustment given the low number of clusters. This calculation is using ICC = 0.05 (black curve) and dispersion parameter = 1.1.](sampleSizeCalcRevised_count.11sitesperarm.withbaseline.png){#fig-sampSize-revCount}
+
+### Assumptions justifications
+
+While we briefly summarised the key assumption in the section above, here we give more detailed reasoning for some of the assumptions we made in the sample size calculation.
+
+#### Control arm rate of events
+
+The control-arm event rate of 0.459 events/participant is based on preliminary data from the cohort study from February 2024.
+
+#### ICC
+
+We estimated the ICC from preliminary data from the cohort study:
+
+-   For all participants: $\rho$ = 0.102, 95% confidence interval \[5e-38, 1\]
+-   For all multi-morbid participants (\>1 of HIV/DM/HT) $\rho$ = 0.114 95% confidence interval \[2e-76, 1\]
+
+There are severe limitations to these two estimates: there are very few clusters (4) in the cohort study and these include Muhimbili, a tertiary hospital rather than the district hospitals we will recruit from in the trial. To note that both CIs stretch from 0 to 1, and so effectively the point estimates are not very informative.
+
+We assumed a general value of $\rho=0.05$ for now as we feel the cohort study estimates are unreliable and biased high. However, we note from @fig-sampSize-revCount, that the effect of higher ICC is minimal as we increase rho from 0.05 (in black) to 0.08 (in blue).
+
+#### Dispersion parameter
+
+This was estimated from the cohort data. We used a mixed effects negative binomial regression model with the duration of observation as offset and the sum of reported numbers of admissions, plus 1 if death occurred for the response variable. This model included fixed effects for country, age, sex and multimorbidity and a random effect for site. With this model we obtained the following (conditional) estimate of over-dispersion:
+
+-   1.09, 95% confidence interval \[1.03, 1.31\]
+
+We note that this estimate is likely unreliable due to data limitations:
+
+-   When a patient was reported dead on the day 30 or 90 form no data was collected regarding readmission.
+-   When only the vital status was obtained for day 90 the number of readmissions was not elicited.
+-   A few patients reported alive (\~30) do not have data on readmission.
+-   Cohort study included very few clusters (4) and some sites (e.g. Muhimbili) are tertiary care centres rather than a secondary care centres (where our intervention is focused).
+
+The above limitations mean that the variance will likely be larger than the event count, given that the event count distribution effectively changes for participants depending on whether or not their number of re-admissions was assessed. For this reason, the above dispersion parameter is likely an overestimate.
+
+Nevertheless, we have assumed an over-dispersion value of 1.1 in our calculations.
+
+#### CV for cluster size
+
+To note that the CV for cluster size of 0.12 above can be justified in 2 ways:
+
+-   If we assume a normal distribution approximation for the distribution of the cluster size, then a CV of 0.12 corresponds to a standard deviation of $80*0.12=9.6$. The middle 99% of a normal distribution with mean 80 and standard deviation 9.6 spans from 55 to 105; wider than what we would expect for our study.
+
+-   For a quasi-Poisson distribution with a dispersion parameter of 1.1 (i.e. assuming th same dispersion parameter for the cluster size as for the primary outcome variable), the standard deviation is $\sqrt{80*1.1}\approx 9.38$. The CV would then be $9.38/80\approx0.12$.
+
+### Power when the ICC, the over-dispersion parameter and the coefficient of variation for cluster size are larger than assumed
+
+We can investigate what power we would have with the same assumptions as above (11 clusters per arm, average cluster size 80, control arm event rate 0.459/participant, intervention arm event rate 0.322/participant), but assuming:
+
+-   ICC = 0.08 (up from 0.05)
+-   Over-dispersion parameter = 1.4 (up from 1.1)
+-   CV for cluster size = 0.15 (up from 0.12)
+
+In this scenario, we would still have 82.3% power.
+
+### Effect of the number of clusters per arm and cluster size
+
+We can also look at the effect of power on 1) the number of clusters per arm and 2) the average cluster size. This is shown in @fig-sampSize-effectOfNumberAndSizeOfClusters. Crucially, we note that with 80 participants per arm, we are still in the steep part of the power curve and so would be able to increase power relatively easily by recruiting more participants per cluster - should the TSC and DSMB recommend this during the course of the study.
+
+```{r}
+#| label: fig-sampSize-effectOfNumberAndSizeOfClusters
+#| fig-cap: "The effect of the number of clusters per arm and average cluster size on statistical power."
+
+gr<-expand.grid(c(50,75,100,125),c(0.02,0.03,0.04,0.05,0.1),c(1.1),c("yes"),c(10,11,12))
+
+df<-data.frame(
+  icc=gr[,2],
+  nCluster=gr[,5],
+  nPerCluster=gr[,1],
+  dispersion=gr[,3],
+  baseline=gr[,4],
+  pow=c(0.754,0.881,0.944,0.974,
+        0.731,0.867,0.936,0.970,
+        0.717,0.859,0.932,0.968,
+        0.709,0.854,0.930,0.967,
+        0.701,0.853,0.930,0.967,
+        0.796,0.910,0.961,0.983,
+        0.773,0.897,0.955,0.981,
+        0.760,0.891,0.952,0.979,
+        0.753,0.887,0.950,0.979,
+        0.745,0.885,0.950,0.979,
+        0.831,0.932,0.973,0.990,
+        0.810,0.922,0.969,0.988,
+        0.797,0.916,0.966,0.987,
+        0.790,0.913,0.965,0.986,
+        0.783,0.911,0.965,0.986
+        )
+)
+
+df %>%
+  ggplot(mapping=aes(x=nPerCluster,y=pow,col=factor(icc))) +
+  geom_point() +
+  geom_line() +
+  facet_wrap(~paste(sep="","Clusters per arm = ",nCluster)) +
+  scale_color_discrete(type=c("steelblue","darkgreen","orange","salmon","mediumorchid"),name="ICC") +
+  theme_minimal() +
+  xlab("Cluster size") +
+  ylab("Power") +
+  labs(caption="Control group rate = 0.459 events/participant,\nIntervention group rate = 0.322 events/participant,\nCV for cluster size = 0.12,\nDispersion parameter = 1.1,\n Small sample adjustment = true.")
+```
+
+# Data simulation
+
+In order to demonstrate the planned analyses and show computer code, we will simulate data.
+
+We simulate hospital readmission / death status by study arm. For the baseline period, we will assume the same event rate in the control and intervention arm. As per sample size calculation, we assume 36.8% and 27.5% of events in the control and intervention arm respectively for the parallel arm period.
+
+```{r Simulation}
+# helper function to simulate random proportions of outcomes in each group
+getBetaFromMeanSd<-function(mean,sd){
+  a<-mean*(mean*(1-mean)/sd^2 - 1)
+  b<-(mean*(1-mean)^2)/sd^2 - (1-mean)
+  return(c(a,b))
+}
+
+## create a hospital level data frame
+set.seed(123)
+grH<-expand.grid(paste(sep="","H",1:12),c("Mw","Tz"))
+grH<-grH[!(grH[,1] %in% c("H11","H12") & grH[,2]=="Mw"),]
+
+hDat<-data.frame(
+  site=paste(sep="_",grH[,2],grH[,1]),
+  country=grH[,2],
+  studyArm="control",
+  propHivScreening=rnorm(n=nrow(grH),mean=0.364,sd=0.025),
+  propDiabScreening=rnorm(n=nrow(grH),mean=0.247,sd=0.02),
+  propHyperScreening=rnorm(n=nrow(grH),mean=0.119,sd=0.01),
+  propLTFU=rbeta(n=nrow(grH),shape1=getBetaFromMeanSd(mean=0.0385,sd=0.01)[1],shape2=getBetaFromMeanSd(mean=0.0385,sd=0.01)[2]), # based on email from Sarah 17/01/2024
+  propDeathBase=rbeta(n=nrow(grH),shape1=getBetaFromMeanSd(mean=0.2692,sd=0.03)[1],shape2=getBetaFromMeanSd(mean=0.2692,sd=0.03)[2]), # based on email from Sarah 17/01/2024
+  propReadmitBase=rbeta(n=nrow(grH),shape1=getBetaFromMeanSd(mean=0.0726,sd=0.02)[1],shape2=getBetaFromMeanSd(mean=0.0726,sd=0.02)[2]) # based on email from Sarah 17/01/2024
+)
+
+for(c in unique(hDat$country)){
+  idInt<-sample(hDat$site[hDat$country==c],size=sum(hDat$country==c)/2,replace=F) # select the intervention hospitals
+  hDat$studyArm[hDat$site %in% idInt]<-"intervention"
+}
+
+# simulate the effect of the intervention (as per protocol we assume a drop in readmission or death from 36.8% to 27.5%)
+hDat<-hDat %>%
+  dplyr::mutate( 
+    propDeathInt=propDeathBase*ifelse(studyArm=="intervention",0.275/0.368,1),
+    propReadmitInt=propReadmitBase*ifelse(studyArm=="intervention",0.275/0.368,1)
+  )
+
+
+## We will assume the probability of event is the same in all arms during the baseline period
+
+## create a patient level data frame at baseline.
+gr<-expand.grid(1:95,paste(sep="","H",1:12),c("Mw","Tz"))
+gr<-gr[!(gr[,2] %in% c("H11","H12") & gr[,3]=="Mw"),]
+
+pDat_baseline<-data.frame(
+  pid=paste(sep="_",gr[,3],gr[,2],gr[,1]), # patient ID
+  site=paste(sep="_",gr[,3],gr[,2]) # hospital ID
+)
+
+pDat_baseline<-dplyr::left_join(x=pDat_baseline,y=hDat,by="site")
+
+pDat_baseline<-pDat_baseline %>%
+  dplyr::mutate(
+    date_at_entry=sample(seq(as.Date("2024-11-01"), as.Date("2025-04-30"), by = "days"), n(), replace = TRUE), # 6 month recruitment window
+    studyPeriod=rep("baseline", nrow(pDat_baseline)),
+    age=18+rpois(n=n(),lambda=10),
+    sex=sample(c("M","F"),replace=T,size=n()), # assumed 50-50 proportions
+    height= round(ifelse(sex == "F", rnorm(n = sum(sex == "F"), mean=158, sd=5), rnorm(n = sum(sex == "M"), mean = 168, sd=5))),
+    weight=round(rnorm(n=n(),mean=20.5*(height/100)^2,sd=3)),
+    hiv=rep(0,nrow(pDat_baseline)), #to be derived from elig_hiv1 and samp_hiv
+    diabetes=rep(0,nrow(pDat_baseline)),
+    hypertension=rep(0,nrow(pDat_baseline)),
+    comorb = NA,
+    deathAt90=runif(n())<propDeathBase, #to be derived from inp_outcome and outp_outcome
+    death_date=as.Date(ifelse(deathAt90,date_at_entry + sample(1:90, n(), replace = TRUE), NA), origin = "1970-01-01"),
+    readmitted=!deathAt90 & runif(n())<propReadmitBase/(1-propDeathBase), # increase in re-admission among survivors to hit overall proportion
+    readmitted_date=as.Date(ifelse(readmitted,date_at_entry + sample(1:90, n(), replace = TRUE), NA), origin = "1970-01-01"),
+    ltfuAt90=!deathAt90 & !readmitted & runif(n())<propLTFU/(1-propDeathBase-propReadmitBase), # increase in LTFU among non-readmitted survivors to hit overall proportion,#to be derived from inp_outcome
+    dateOfLTFU=as.Date(ifelse(ltfuAt90,date_at_entry + sample(1:90, n(), replace = TRUE), NA), origin = "1970-01-01"),
+    event=ifelse(deathAt90 | readmitted, 1,0),
+    dateOfFirstEvent=as.Date(ifelse(event==0, NA , ifelse(event==1 & !is.na(readmitted_date), readmitted_date, death_date)), origin="1970-01-01")
+  )
+
+pDat_baseline<- pDat_baseline %>%
+  dplyr::mutate(
+    readmitted_count=ifelse(readmitted==1, rtpois(n=n(),lambda = 1.2, a=1, b=5),0)
+  )
+
+pDat_baseline$death_date[pDat_baseline$deathAt90 & pDat_baseline$readmitted & ymd(pDat_baseline$death_date)<ymd(pDat_baseline$readmitted_date)]<-pDat_baseline$readmitted_date[pDat_baseline$deathAt90 & pDat_baseline$readmitted & ymd(pDat_baseline$death_date)<ymd(pDat_baseline$readmitted_date)] # just to avoid death before readmission records
+
+
+# generate data on comorbidities, guaranteeing that every participant has at least 2 morbidities and deriving the overal comorbidity status
+for(j in 1:nrow(pDat_baseline)){
+  comorb<-0
+  
+  while(comorb<2){
+    hiv<-rbinom(n=1,size=1,prob=pDat_baseline$propHivScreening[j])
+    diabetes<-rbinom(n=1,size=1,prob=pDat_baseline$propDiabScreening[j])
+    hypertension<-rbinom(n=1,size=1,prob=pDat_baseline$propHyperScreening[j])
+    
+    comorb<-hiv+diabetes+hypertension
+  }
+  
+  pDat_baseline$hiv[j]<-hiv
+  pDat_baseline$diabetes[j]<-diabetes
+  pDat_baseline$hypertension[j]<-hypertension
+  
+  rm(hiv,diabetes,hypertension,comorb)
+}
+
+pDat_baseline<-pDat_baseline %>%
+  dplyr::mutate(
+    comorb=case_when(
+      hiv==1 & diabetes==1 & hypertension==0 ~ "HivDiabetes",
+      hiv==1 & diabetes==0 & hypertension==1 ~ "HivHypertension",
+      hiv==0 & diabetes==1 & hypertension==1 ~ "DiabetesHypertension",
+      hiv==1 & diabetes==1 & hypertension==1 ~ "HivDiabetesHypertension"
+    )
+  ) %>%
+  dplyr::select(!c(propDeathBase,propReadmitBase,propDeathInt,propReadmitInt,propLTFU,propHivScreening,propDiabScreening,propHyperScreening))
+
+ pDat_baseline <- pDat_baseline %>%
+   mutate(
+    fu_time = difftime(dateOfFirstEvent, date_at_entry, units = "days"),
+    fu_time = ifelse(is.na(fu_time), 90, fu_time)
+   )
+
+
+
+## create a patient level data frame after intervention has been introduced.
+gr<-expand.grid(95+1:95,paste(sep="","H",1:12),c("Mw","Tz")) # start IDs at 96 for each site given 95 already recruited at baseline
+gr<-gr[!(gr[,2] %in% c("H11","H12") & gr[,3]=="Mw"),]
+
+pDat_intervention<-data.frame(
+  pid=paste(sep="_",gr[,3],gr[,2],gr[,1]), # patient ID
+  site=paste(sep="_",gr[,3],gr[,2]) # hospital ID
+)
+
+pDat_intervention<-dplyr::left_join(x=pDat_intervention,y=hDat,by="site")
+
+pDat_intervention<-pDat_intervention %>%
+  dplyr::mutate(
+    date_at_entry=sample(seq(as.Date("2025-06-01"), as.Date("2025-11-30"), by = "days"), n(), replace = TRUE), # washout-period around 1 month, so skipping May 2025; then another 6 months
+    studyPeriod=rep("intervention", nrow(pDat_intervention)),
+    age=18+rpois(n=n(),lambda=10),
+    sex=sample(c("M","F"),replace=T,size=n()), # assumed 50-50 proportions
+    height= round(ifelse(sex == "F", rnorm(n = sum(sex == "F"), mean=158, sd=5), rnorm(n = sum(sex == "M"), mean = 168, sd=5))),
+    weight=round(rnorm(n=n(),mean=20*(height/100)^2,sd=3)),
+    hiv=rep(0,nrow(pDat_intervention)), #to be derived from elig_hiv1 and samp_hiv
+    diabetes=rep(0,nrow(pDat_intervention)),
+    hypertension=rep(0,nrow(pDat_intervention)),
+    comorb = NA,
+    deathAt90=runif(n())<propDeathInt, #to be derived from inp_outcome and outp_outcome
+    death_date=as.Date(ifelse(deathAt90,date_at_entry + sample(1:90, n(), replace = TRUE), NA), origin = "1970-01-01"),
+    readmitted=!deathAt90 & runif(n())<propReadmitInt/(1-propDeathInt), # increase in re-admission among survivors to hit overall proportion
+    readmitted_date=as.Date(ifelse(readmitted,date_at_entry + sample(1:90, n(), replace = TRUE), NA), origin = "1970-01-01"),
+    ltfuAt90=!deathAt90 & !readmitted & runif(n())<propLTFU/(1-propDeathInt-propReadmitInt), # increase in LTFU among non-readmitted survivors to hit overall proportion,#to be derived from inp_outcome
+    dateOfLTFU=as.Date(ifelse(ltfuAt90,date_at_entry + sample(1:90, n(), replace = TRUE), NA), origin = "1970-01-01"),
+    event=ifelse(deathAt90 | readmitted, 1,0),
+   dateOfFirstEvent=as.Date(ifelse(event==0, NA , ifelse(event==1 & !is.na(readmitted_date), readmitted_date, death_date)), origin="1970-01-01")
+  )
+
+pDat_intervention<- pDat_intervention %>%
+  dplyr::mutate(
+    readmitted_count=ifelse(readmitted==1, rtpois(n=n(),lambda = 1.5, a=1, b=3),0)
+  )
+
+pDat_intervention$death_date[pDat_intervention$deathAt90 & pDat_intervention$readmitted & ymd(pDat_intervention$death_date)<ymd(pDat_intervention$readmitted_date)]<-pDat_intervention$readmitted_date[pDat_intervention$deathAt90 & pDat_intervention$readmitted & ymd(pDat_intervention$death_date)<ymd(pDat_intervention$readmitted_date)] # just to avoid death before readmission records
+
+# generate data on comorbidities, guaranteeing that every participant has at least 2 morbidities and deriving the overall comorbidity status
+for(j in 1:nrow(pDat_intervention)){
+  comorb<-0
+  
+  while(comorb<2){
+    hiv<-rbinom(n=1,size=1,prob=pDat_intervention$propHivScreening[j])
+    diabetes<-rbinom(n=1,size=1,prob=pDat_intervention$propDiabScreening[j])
+    hypertension<-rbinom(n=1,size=1,prob=pDat_intervention$propHyperScreening[j])
+    
+    comorb<-hiv+diabetes+hypertension
+  }
+  
+  pDat_intervention$hiv[j]<-hiv
+  pDat_intervention$diabetes[j]<-diabetes
+  pDat_intervention$hypertension[j]<-hypertension
+  
+  rm(hiv,diabetes,hypertension,comorb)
+}
+
+pDat_intervention<-pDat_intervention %>%
+  dplyr::mutate(
+    comorb=case_when(
+      hiv==1 & diabetes==1 & hypertension==0 ~ "HivDiabetes",
+      hiv==1 & diabetes==0 & hypertension==1 ~ "HivHypertension",
+      hiv==0 & diabetes==1 & hypertension==1 ~ "DiabetesHypertension",
+      hiv==1 & diabetes==1 & hypertension==1 ~ "HivDiabetesHypertension"
+    )
+  ) %>%
+  dplyr::select(!c(propDeathBase,propReadmitBase,propDeathInt,propReadmitInt,propLTFU,propHivScreening,propDiabScreening,propHyperScreening))
+
+
+ pDat_intervention <- pDat_intervention %>%
+   mutate(
+    fu_time = difftime(dateOfFirstEvent, date_at_entry, units = "days"),
+    fu_time = ifelse(is.na(fu_time), 90, fu_time)
+   )
+```
+
+```{r}
+pDat<-rbind(pDat_baseline,pDat_intervention)  %>%
+  dplyr::mutate(
+    ageCentered=age-median(age)
+  )
+
+rm(pDat_baseline,pDat_intervention)
+```
+
+To make sure the simulated data are sensible, we can summarise visually the key variables of intervention and outcome. Specifically, we can plot the composite primary outcome by study arm, see @fig-simData_outcome.
+
+```{r plotSimData-baseline}
+#| label: fig-simData_outcome
+#| fig-cap: "Composite re-admission / death outcome proportions by study arm for the simulated data at both time periods"
+
+#plot data
+plot_pDat<-pDat %>%
+  dplyr::filter() %>%
+  dplyr::group_by(studyPeriod,studyArm) %>%
+  dplyr::summarise(
+    n=n(),
+    k=sum(event),
+    .groups="drop") %>%
+  mutate(
+    prop=k/n
+  )
+
+
+plot_pDat %>%
+  ggplot(mapping=aes(x=studyArm,y=prop,fill=studyArm)) +
+  geom_bar(stat="identity",alpha=0.9) +
+  scale_fill_manual(values=c("steelblue","orange")) +
+  xlab("Study arm") +
+  ylab("Event proportion")+
+  theme_light() +
+  facet_wrap(~studyPeriod) +
+  labs(title="Simulated data by study period: event proportion per study arm")
+```
+
+# Statistical Analysis Plan
+
+The R code to generate the results is embedded in this document. By default it is hidden, but can be displayed by clicking on the `Show the code` boxes on the left hand side.
+
+## General considerations
+
+The reporting of this study will be prepared in accordance with the CONSORT guidelines [@schulz_etal2010] and, more specifically, the extension to cluster randomised trials [@campbell_etal2012].
+
+Continuous data variables will be summarized using the following descriptive statistics:
+
+-   N (size of relevant analysis population)
+-   n (size of analysis population without missing values)
+-   arithmetic mean (or geometric mean if more appropriate)
+-   standard deviation (SD)
+-   median
+-   25th percentile value (P25), 75th percentile value (P75) and interquartile range (IQR)
+-   minimum and maximum (where relevant)
+
+The percentages for observed levels will be reported for all binary and categorical measures. When appropriate, corresponding exact 95% confidence intervals (CIs) for percentages will be included. Percentages, rather than proportions, will be reported unless there is a specific reason to report proportions.
+
+For statistical test, a significance level of 5% will be used. All p-values will be reported to 2 significant figures.
+
+### Reporting conventions
+
+P-values $\geq 0.001$ will be reported to 2 significant figures; p-values less than 0.001 will be reported as $<0.001$. Counts / frequencies will be reported as such, without decimal digits. The mean, standard deviation, median, IQR and other statistics will be reported to one decimal place greater than the original data. Minimum and maximum values will use the same number of decimal places as the original data. Percentages will be reported to 1 decimal digit; values greater than zero but $<0.1\%$ will be presented as $<0.1\%$; values greater than $99.9\%$ but less than $100\%$ will be reported as $>99.9\%$. Where proportions are reported, rather than percentages, these will be reported to 3 decimal digits for consistency of reporting of percentages (with lower / upper extremes reported as $<0.001$ and $>0.999$). Estimated parameters, not on the same scale as raw observations (e.g. regression coefficients) will be reported to 3 decimal digits.
+
+
+### Missing data
+
+While every effort will be made to follow-up enrolled patients, there may be loss-to-follow-up. For sensitivity analyses, we will, for each of the main objectives, conduct i) a complete case analysis, ii) a worst-case and iii) a best-case scenario imputation and analyse the data with these imputations.
+
+Should the missing data be unsubstantial (5% or less of the total data), the complete case analysis will be the main analysis. Should the missing data be more substantial (i.e. exceed 5% of the total data), we will use multiple imputation for those analyses which cannot accommodate censored data. Specifically we will use fully conditional specification (FCS) as implemented in Multiple Imputation using Chained Equations (MICE, @vanBuurenGroothuisOudshoorn2011) and the `mice` package in R, with m=10 imputations at least.
+
+No imputation will be done for the time-to-event analyses.
+
+### Technical details
+
+The R environment for statistical computing (v4.3.2 or later) will be used for all analyses.
+
+All analysis code will be made publicly available under an MIT or GNU GPL v3.0 license on GitHub.
+
+### Analysis population
+
+For the primary analyses, the analysis will use the intention-to-treat (ITT) population i.e. patients' data will be analysed according to the study arm the facility they attended was randomized to.
+
+## Interim analysis
+
+We are not planning a formal interim analysis but **at the end of the baseline period**, we plan to check our sample size assumptions for discussion with the TSC and DSMB. To note that this data check will **only use data from the baseline period** and will **NOT** look at evaluating the efficacy of the intervention at that point. As such there is no $\alpha$-spending that needs to be taken into account. We will merely check assumptions about 3 parameters in our sample size calculation:
+
+-   Control arm event rate
+-   ICC
+-   Primary event count dispersion parameter
+
+Specifically, we will NOT estimate the event rate in the intervention arm and we will NOT compare this to the control arm event rate.
+
+As detailed above, we expect to be well powered to conduct this trial, even in the case where some of our sample size calculation assumptions should prove to have been incorrect. As such we do not expect any change in the running of the trial after the TSC / DSMB discussion after the baseline period has concluded. However, given the uncertainty of some of the parameters of our study design, we feel it is more prudent to verify our assumptions after the baseline period, before the intervention period starts.
+
+## CONSORT diagram
+
+We will summarise the trial procedures using a standard CONSORT diagram as illustrated in @fig-consort.
+
+```{r CONSORT}
+#| label: fig-consort
+#| fig-cap: "(MOCK FIGURE) CONSORT diagram for the Multilink trial."
+#| fig-width: 12
+#| fig-height: 10
+
+include_graphics("CONSORT-updated3.png")
+```
+
+## Patient characteristics
+
+We will list the participants' characteristics by study arm, for each study period, see @tbl-participantCharacteristics.
+
+```{r participantCharacteristics}
+#| label: tbl-participantCharacteristics
+#| tbl-cap: "(MOCK TABLE) Participant characteristics."
+
+tab1 <- pDat
+
+tab1$studyPeriod <- factor(tab1$studyPeriod, levels = c("baseline", "intervention"),
+                        labels = c("Baseline", "Intervention"))
+
+tab1$studyArm <- factor(tab1$studyArm, levels = c("control", "intervention"),
+                        labels = c("Control", "Intervention"))
+
+tab1$sex <- factor(tab1$sex, levels = c("F", "M"),
+                   labels = c("Female", "Male"))
+
+tab1$hiv <-
+  factor(tab1$hiv, levels = c(0,1),
+         labels = c("No","Yes"))
+
+tab1$diabetes <-
+  factor(tab1$diabetes, levels = c(0,1),
+         labels = c("No","Yes"))
+
+tab1$hypertension <-
+  factor(tab1$hypertension, levels = c(0,1),
+         labels = c("No","Yes"))
+
+tab1$comorb <- factor(tab1$comorb, levels = c("DiabetesHypertension", "HivDiabetes", "HivDiabetesHypertension", "HivHypertension"),
+                      labels = c("Diabetes and Hypertension", "Diabetes and HIV", "Diabetes, HIV and Hypertension", "HIV and Hypertension"))
+
+tab1$readmitted_count <-
+  factor(tab1$readmitted_count, levels = c(0,1,2,3,4,5))
+
+tab1$event <-
+  factor(tab1$event, levels = c(0,1),
+         labels = c("No","Yes"))
+
+labels <- list(
+  variables=list(age="Age",
+                 #height="Height",
+                 #weight="Weight",
+                 sex="Sex",
+                 hiv="HIV status",
+                 diabetes="Diabetes status",
+                 hypertension = "Hypertension status",
+                 comorb = "Commobidity",
+                 deathAt90 = "Death",
+                 readmitted_count = "Hospital readmissions"),
+  groups=list("", "Baseline period", "Intervention period"))
+
+
+split.table<-split(tab1, ~ tab1$studyArm + tab1$studyPeriod)
+
+names(split.table)[names(split.table)=="Control.Baseline"]<-"Control sites"
+names(split.table)[names(split.table)=="Control.Intervention"]<-"Control sites"
+names(split.table)[names(split.table)=="Intervention.Baseline"]<-"Intervention sites"
+names(split.table)[names(split.table)=="Intervention.Intervention"]<-"Intervention sites"
+
+strata <- c(list(Total=tab1), split.table)
+
+#need to work on decimal places for mean
+
+tab1$readmitted_count <- structure(
+  tab1$readmitted_count, 
+  fu_time = tab1$fu_time, 
+  custom_tag = "readmitted_count"
+)
+
+# rndr <- function(x, name, ...) {
+#   
+#     if (!is.numeric(x)) return(render.categorical.default(x))
+#     what <- switch(name,
+#         age = "Mean (SD)",
+#         readmitted_count  = "Sum")
+#     parse.abbrev.render.code(c("", what))(x)
+# }
+
+
+
+
+ my.render.cont <- function(x) {
+   with(stats.apply.rounding(stats.default(x), digits=2), c("",
+      "Mean (SD)"=sprintf("%s (%s)", MEAN, SD)))
+}
+
+my.render.cat <- function(x) {
+  c("", sapply(stats.default(x), function(y) with(y,
+      sprintf("%d (%0.1f %%)", FREQ, PCT))))
+}
+
+
+#caption <- "(MOCK TABLE) Participant Characteristics"
+
+table1(strata, labels, groupspan=c(1, 2, 2), render.continuous=my.render.cont, render.categorical=my.render.cat)
+```
+
+## Primary Analysis
+
+The primary objective analysis will compare the event (hospital readmission / death) rates between the intervention and control arms, using the ITT study population.
+
+The primary analysis model will be a mixed-effects negative binomial regression model with the primary analysis focused on estimating the effect of the intervention on the outcome using this model.
+
+### Mixed-effects negative binomial regression
+
+A generalised (negative binomial distribution with logit link) linear mixed model (GLMM) for the composite primary endpoint (number of re-admissions and deaths at day 90) will be fitted. This negative binomial regression model will include fixed factors for study arm, study period, interaction term for study arm and period (i.e. a variable that is 0 for all control sites, 0 in intervention sites during the baseline period and 1 in intervention sites during the intervention period), country, age (centered on median age), sex, co-morbidity, and random factors for hospital facility and will use an unstructured variance-covariance matrix for the residuals. In addition the model will include an offset term for the total person-time contributed by each participant until either death, loss-to-follow-up or day 90 post index hospitalisation:
+
+$$
+\begin{align}
+log(\mu) = log(E[Y|b_{Facility}]) = & \beta_{0} + \beta_{Int\,arm}\cdot X_{Int\,arm} + \beta_{Int\ period}\cdot X_{Int\,period} +\\& \beta_{Int\,arm\,*\,Int\,period}\cdot X_{Int\,arm\,*\,Int\,period} +\\ & \beta_{Age}\cdot X_{Age} + \beta_{Male}\cdot X_{Male} + \beta_{HIVDiabetes}\cdot X_{HIVDiabetes} +\\& \beta_{HIVDiabetesHypertension}\cdot X_{HIVDiabetesHypertension}+ \\ & 
+\beta_{HIVHypertension}\cdot X_{HIVHypertension} + \beta_{Tanzania}\cdot X_{Tanzania} + b_{Facility} + \\ &
+\log(T)
+\end{align}
+$$
+
+where $\mu$ is the expected number of re-admissions and deaths at day 90, $Y$ is a random variable count of re-admissions and deaths, $X_{Int\,arm}$ is an indicator variable for the intervention study arm, $X_{Int\,period}$ is an indicator variable for the intervention study period, $X_{Age}$ is a variable for age of a participant (centered on the median participant age across both countries), $X_{Male}$ is an indicator variable for whether a participant is a male or not, $X_{HIVDiabetes}$ is an indicator variable for whether a participant has HIV and diabetes, $X_{HIVDiabetesHypertension}$ is an indicator variable for whether a participant has HIV, diabetes and hypertension, $X_{HIVHypertension}$ is an indicator variable for whether a participant has HIV and Hypertension, $X_{Tanzania}$ is an indicator variable for whether a participant is from Tanzania or not and $X_{Int\,arm\,*\,Int\,period}$ is an indicator variable for the interaction term between intervention study arm and study period (i.e. it is 1 for participants in the intervention arm during the intervention period and 0 for everyone else). $\beta_{0}$, $\beta_{Int\,arm}$, $\beta_{Int\,period}$, $\beta_{Age}$, $\beta_{Male}$, $\beta_{HIVDiabetes}$, $\beta_{HIVDiabetesHypertension}$, $\beta_{HIVHypertension}$, $\beta_{Tanzania}$, and $\beta_{Int\,arm\,*\,Int\,period}$ are the regression coefficients that will be estimated, $b_{Facility}$ is an indicator variable for the random effects associated with the facility a participant is from and $T$ is the person-time contributed by each participant. $Y|b_{Facility}$ is assumed to follow a negative binomial distribution with mean $\mu$.
+
+We will test the null hypothesis $H_0$ of no effect of the intervention and period against the alternative hypothesis $H_1$ that it has an effect on the number of re-admissions and deaths after 90 days:
+
+$$
+H_0: \beta_{Int\,arm\,*\,Int\,period}=0
+$$
+
+$$
+H_1:\beta_{Int\,arm\,*\,Int\,period}\neq 0 
+$$
+
+The results from the GLMM will be summarized in tabular form, see @tbl-mixedEffectsNBModel.
+
+```{r mixed_effect_NBmodel}
+#| label: tbl-mixedEffectsNBModel
+#| tbl-cap: "(MOCK TABLE) Summary of the mixed-effects negative binomial regression model for the composite primary outcome of death / re-admission."
+
+pDat <- pDat %>%
+  dplyr::mutate(
+    event_count=deathAt90 + readmitted_count
+  )
+
+# Fit the mixed-effects logistic regression model
+nb_mod <- glmer.nb(event_count ~ studyArm + studyPeriod + studyArm*studyPeriod + ageCentered + sex + comorb + country + offset(log(fu_time)) + (1 | site), data = pDat, control=glmerControl(optimizer="bobyqa"))
+
+modResNB<-summary(nb_mod)$coefficients %>%
+  as.data.frame() %>%
+  mutate(
+    parameter=case_when(
+      rownames(summary(nb_mod)$coefficients)=="(Intercept)"~"(Intercept)",
+      rownames(summary(nb_mod)$coefficients)=="studyArmintervention"~"Study arm: Intervention",
+      rownames(summary(nb_mod)$coefficients)=="studyPeriodintervention"~"Study period: Intervention",
+      rownames(summary(nb_mod)$coefficients)=="studyArmintervention:studyPeriodintervention"~"Study arm Intervention: Study period Intervention",
+      rownames(summary(nb_mod)$coefficients)=="ageCentered"~"Age",
+      rownames(summary(nb_mod)$coefficients)=="sexM"~"Sex: Male" ,
+      rownames(summary(nb_mod)$coefficients)=="comorbHivDiabetes"~"Comorbidity: Hiv + Diabetes",
+      rownames(summary(nb_mod)$coefficients)=="comorbHivDiabetesHypertension"~"Comorbidity: Hiv + Diabetes + Hypertension",
+      rownames(summary(nb_mod)$coefficients)=="comorbHivHypertension"~"Comorbidity: Hiv + Hypertension",
+      rownames(summary(nb_mod)$coefficients)=="countryTz"~"Country: Tanzania"
+      )
+  )
+
+
+
+colnames(modResNB) <- c("Estimate", "Std.err", "z.value", "p.value", "parameter")
+
+modResNB$Estimate <- exp(modResNB$Estimate)
+modResNB$Std.err <- exp(modResNB$Std.err)
+
+#modResNB<-rbind(modResNB,rep(NA,5))
+#modResNB$Estimate[nrow(modResNB)]<-unlist(summary(nb_mod)$varcor)["site"]
+#modResNB$parameter[nrow(modResNB)]<-"Facility-level random intercept variance"
+#rownames(modResNB)[nrow(modResNB)]<-modResNB$parameter[nrow(modResNB)]
+
+# summary table
+modResNB %>%
+  dplyr::select(parameter, Estimate, Std.err, z.value, p.value) %>%
+  mutate_at(vars(Estimate, Std.err, z.value), ~ format(round(., 3), nsmall = 3)) %>%
+  mutate(p.value = ifelse(parameter != "(Intercept)" & p.value < 0.05,
+                          cell_spec(format(nsmall = 3, round(digits = 3, p.value)), bold = T),
+                          cell_spec(format(nsmall = 3, round(digits = 3, p.value)), bold = F))) %>%
+  kbl(row.names = FALSE, col.names = c("", "Incident rate ratio", "Std. error", "Z statistic", "p-value"),
+        escape = FALSE) %>%
+  kable_styling(full_width = FALSE)
+
+
+#tbl_regression(nb_mod, exponentiate = T, pvalue_fun= ~style_sigfig(., digits = 3), label = list(studyArm ~ "Study Arm", studyPeriod ~ "Study Period", ageCentered ~ "Age", sex ~ "Sex", comorb ~ "Cormobities", country ~ "Country", `studyArm:studyPeriod` ~ "Study Arm * Study Period"))
+```
+
+#### Model diagnostics
+
+Diagnostic checks for generalised linear models are not always straightforward. This is particularly true for dichotomous and count data models. Nevertheless, we will compute several diagnostics to check model assumptions.
+
+##### Observed vs predicted count frequencies
+
+We will visually compare observed versus predicted proportions of counts. Further, making use of the Central Limit Theorem, we will compare the mean count between observed and predicted counts using a two-sample t-test.
+
+```{r}
+#| label: fig-obsVsPredPlot
+#| fig-cap: "(MOCK FIGURE) Model diagnostic plot: Observed vs predicted values from the mixed negative binomial model."
+#| fig-width: 10
+#| fig-height: 7.5
+    
+# predicted MEAN values
+fitted_values <- predict(nb_mod,type="response")
+  # this takes into account all predictors and random factors
+
+# dispersion parameter
+nb.disp<-getME(nb_mod,"glmer.nb.theta")
+
+# simulate data using the predicted means and the dispersion parameter
+simDat<-rnbinom(n=nrow(nb_mod@frame),mu=fitted_values,size=nb.disp)
+for(j in 2:100){ # repeating the simulation a 100 times
+  simDat<-c(simDat,rnbinom(n=nrow(nb_mod@frame),mu=fitted_values,size=nb.disp))
+}
+
+# create a data frame
+freqCheckDat<-data.frame(
+  counts=c(pDat$event_count,simDat),
+  source=c(rep("Observed",nrow(pDat)),rep("Predicted",length(simDat)))
+)
+
+freqCheckDatTab<-as.data.frame(table(freqCheckDat$source,freqCheckDat$counts))
+colnames(freqCheckDatTab)<-c("Source","Count","Frequency")
+freqCheckDatTab<-freqCheckDatTab %>%
+  dplyr::mutate(Proportion=Frequency)
+
+freqCheckDatTab$Proportion[freqCheckDatTab$Source=="Observed"]<-freqCheckDatTab$Proportion[freqCheckDatTab$Source=="Observed"]/sum(freqCheckDatTab$Frequency[freqCheckDatTab$Source=="Observed"])
+freqCheckDatTab$Proportion[freqCheckDatTab$Source=="Predicted"]<-freqCheckDatTab$Proportion[freqCheckDatTab$Source=="Predicted"]/sum(freqCheckDatTab$Frequency[freqCheckDatTab$Source=="Predicted"])
+
+p.t.test<-t.test(x=pDat$event_count,y=simDat)
+
+freqCheckDatTab %>%
+  ggplot(mapping=aes(x=Count,y=Proportion,fill=Source)) +
+  geom_bar(position=position_dodge(),stat="identity") +
+  scale_fill_manual(values=c("steelblue","orange")) +
+  theme_minimal() +
+  labs(caption=paste(sep="","Observed proportions from the data, predicted data obtained from 100 simulations from the fitted mixed negative binomial model.\nEach simulation had the same sample size as the observed data and used the identical covariate values as for the observed dataset.\nP-value for the average count to differ between observed and predicted (using the CLT and a two-sample t-test): p = ",format(nsmall=3,round(digits=3,p.t.test$p.value)),"."))
+```
+
+##### Mean-variance trend
+
+While we will plot the Pearson residuals against the fitted values (on the link scale), for count data models, this will have limited utility given the discrete number of values the data can take (and hence results in discrete trajectories of residuals).
+
+```{r meanvar}
+#| label: fig-meanvar
+#| fig-cap: "(MOCK FIGURE) Model diagnostic plot: Mean-variance trend for the mixed negative binomial model."
+
+fitted_values <- predict(nb_mod,type="link")
+resid.nb <- residuals(nb_mod, type="pearson")
+df<-data.frame(fitted=fitted_values,residuals=resid.nb,data=pDat$event_count)
+
+df %>%
+  ggplot(mapping=aes(x=fitted,y=residuals)) +
+  geom_ribbon(mapping=aes(ymin=-3,ymax=3),fill="lightgrey",alpha=0.5) +
+  geom_point(mapping=aes(pch=factor(data),col=factor(data))) +
+  geom_smooth(col="steelblue",method = "gam",lwd=2) +
+  geom_abline(intercept = 0, slope = 0, col="darkblue",lty=2) +
+  xlab("Fitted values (link scale)") +
+  ylab("Pearson residuals") +
+  theme_light() +
+  scale_color_manual(values=c("grey10","grey25","grey38","grey50","grey60","grey70"),name="Event count") +
+  scale_shape_manual(values=1:6,name="Event count") +
+  labs(caption="Diagnostic plot to check the mean-variance trend.\nIf the correct distribution and link function have been specified, this should show a flat average around 0.\nExcept for outliers, residuals should be within +-3 of the null line.\nFor count data with low counts, this type of diagnostic graph has limited utility.")
+```
+
+##### Graphical checks
+
+We will do Ord plots (@Ord1967), to check if the negative binomial distribution is appropriate. This does not involve the fitted model, but can help to determine the appropriateness of a negative binomial distribution.
+
+If we denote $x$ for counts from the distribution and $n_x$ as the frequency of that count, then the ord plot shows $\frac{x\cdot n_x}{n_{x-1}}$ versus $x$. If this plot is approximately linear, then a negative binomial distribution should have a positive intercept and a positive slope (a Poisson distribution having 0 intercept and positive slope).
+
+This graph is only meant as a guide not as a strict criterion to abide by. In particular for clustered data, the ord plot can be unreliable.
+
+```{r}
+#| label: fig-ordplot
+#| fig-cap: "(MOCK FIGURE) Model diagnostic plot: Ord plot to check appropriateness of negative binomial distribution for the mixed negative binomial model."
+
+Ord_plot(pDat$event_count)
+```
+
+##### Linearity
+
+##### Multicollinearity
+
+We will check that there there is no multicollinearity among the independent variables using the variance inflation factors (VIF). A VIF that exceeds 5 indicates a problematic amount of collinearity.
+
+```{r NBModelDiags_multicol}
+
+#calculate variance inflation factor
+vif(nb_mod)
+```
+
+
+##### Influential observations
+
+We will check that there are no influential observations using Cook's distance as shown in @fig-nbcooks.
+
+```{r NBModelDiags_cooks}
+#| label: fig-nbcooks
+#| fig-cap: "(MOCK FIGURE) Model diagnostic plot: Influential observations for the mixed negative binomial model."
+
+
+#calculate cooks distance using the sites
+
+cooks_distance <- cooks.distance(influence(nb_mod, group = "site"))
+
+#plot the cooks distance
+plot(cooks_distance)
+```
+
+## Secondary analyses
+
+We will conduct three secondary analyses for assessing the efficacy of the intervention:
+
+-   Mixed-effects logistic regression for a binary composite endpoint of re-admission / death.
+
+-   Proportional hazards model with a frailty term for the time to first event (re-admission / death).
+
+-   Win ratio approach adapted for a clustered trial design with baseline period.
+
+In addition to these, we will also do i) a simple before/after analysis for the intervention clusters, ii) a within-cluster before/after analysis for each intervention site and iii) a repeat of the GLMM analysis for each outcome (death, re-admission) separately.
+
+### Mixed-effects logistic regression
+
+A generalised (binomial distribution with logit link) linear mixed model (GLMM) for the binary composite primary endpoint (re-admission or death at day 90) will be fitted. This logistic regression model will include fixed factors for study arm, study period, interaction term for study arm and period, country, age (centred on median age), sex, co-morbidity, and random factors for hospital facility and will use an unstructured variance-covariance matrix for the residuals.
+
+Patients lost to follow-up (i.e. with incomplete data to assess the primary composite endpoint) will not be included in the primary analysis. By protocol, such patients will have been replaced so that the sample size requirement of 80 patients per facility will still be met.
+
+As for any GLMM, the integral over the random effects space needs to be approximated. We will use adaptive Gauss-Hermite quadrature with 25 quadrature points.
+
+The results from the GLMM will be summarized in tabular form, see @tbl-mixedEffectsModel.
+
+```{r mixed_effect_model}
+#| label: tbl-mixedEffectsModel
+#| tbl-cap: "(MOCK TABLE) Summary of the mixed-effects logistic regression model for the composite binary primary outcome of death / re-admission."
+
+# Fit the mixed-effects logistic regression model
+mixef_mod <- glmer(event ~ studyArm + studyPeriod + studyArm*studyPeriod + ageCentered + sex + comorb + country + (1 | site), family = "binomial", data = pDat, nAGQ = 25)
+
+modResMixef<-summary(mixef_mod)$coefficients %>%
+  as.data.frame() %>%
+  mutate(
+    parameter=case_when(
+      rownames(summary(mixef_mod)$coefficients)=="(Intercept)"~"(Intercept)",
+      rownames(summary(mixef_mod)$coefficients)=="studyArmintervention"~"Study arm: Intervention",
+      rownames(summary(mixef_mod)$coefficients)=="studyPeriodintervention"~"Study period: Intervention",
+      rownames(summary(mixef_mod)$coefficients)=="studyArmintervention:studyPeriodintervention"~"Study arm Intervention: Study period Intervention",
+      rownames(summary(mixef_mod)$coefficients)=="ageCentered"~"Age",
+      rownames(summary(mixef_mod)$coefficients)=="sexM"~"Sex: Male" ,
+      rownames(summary(mixef_mod)$coefficients)=="comorbHivDiabetes"~"Comorbidity: Hiv + Diabetes",
+      rownames(summary(mixef_mod)$coefficients)=="comorbHivDiabetesHypertension"~"Comorbidity: Hiv + Diabetes + Hypertension",
+      rownames(summary(mixef_mod)$coefficients)=="comorbHivHypertension"~"Comorbidity: Hiv + Hypertension",
+      rownames(summary(mixef_mod)$coefficients)=="countryTz"~"Country: Tanzania"
+      )
+  )
+
+
+
+colnames(modResMixef) <- c("Estimate", "Std.err", "z.value", "p.value", "parameter")
+
+modResMixef$Estimate <- exp(modResMixef$Estimate)
+modResMixef$Std.err <- exp(modResMixef$Std.err)
+
+#modResMixef<-rbind(modResMixef,rep(NA,5))
+#modResMixef$Estimate[nrow(modResMixef)]<-unlist(summary(mixef_mod)$varcor)["site"]
+#modResMixef$parameter[nrow(modResMixef)]<-"Facility-level random intercept variance"
+#rownames(modResMixef)[nrow(modResMixef)]<-modResMixef$parameter[nrow(modResMixef)]
+
+# summary table
+modResMixef %>%
+  dplyr::select(parameter, Estimate, Std.err, z.value, p.value) %>%
+  mutate_at(vars(Estimate, Std.err, z.value), ~ format(round(., 3), nsmall = 3)) %>%
+  mutate(p.value = ifelse(parameter != "(Intercept)" & p.value < 0.05,
+                          cell_spec(format(nsmall = 3, round(digits = 3, p.value)), bold = T),
+                          cell_spec(format(nsmall = 3, round(digits = 3, p.value)), bold = F))) %>%
+  kbl(row.names = FALSE, col.names = c("", "Odds ratio", "Std. error", "Z statistic", "p-value"),
+        escape = FALSE) %>%
+  kable_styling(full_width = FALSE)
+```
+
+#### Model diagnostics
+
+The mixed effects logistic regression model makes three key assumptions, namely that the logit of the outcome and the predictors are linearly related, there are no influential observations and no multicollinearity among the independent variables. We will check these assumptions.
+
+##### Linearity
+
+We will check that there is a linear relationship between the logits + residuals of the outcome and the continuous predictor variables by inspecting scatter plots of the logit + residual values and each predictor as shown in @fig-mixedlinear.
+
+```{r mixedModelDiags_linear}
+#| label: fig-mixedlinear
+#| fig-cap: "(MOCK FIGURE) Model diagnostic plot: Linearity assumption for the mixed logistic regression model."
+
+#predict the probability of event
+probabilities <- predict(mixef_mod, type="response")
+
+#select numeric variables
+pDat_num <- pDat %>%
+  dplyr::select_if(is.numeric) %>%
+  dplyr::select(ageCentered) #the current model has one numeric variable but we anticipate more in the actual model
+
+predictors <- colnames(pDat_num)
+
+residuals <- residuals(mixef_mod, type = "pearson")
+
+#Bind the logit
+pDat_num <- pDat_num %>%
+  dplyr::mutate(
+    logit=log(probabilities/(1-probabilities)),
+    residual=residuals
+    ) %>%
+  gather(key = "predictors", value = "predictor", -c(logit,residual))
+
+#plot data
+ggplot(pDat_num, aes(x=predictor,y=logit+residual))+
+  geom_point(size = 0.5, alpha = 0.5) +
+  geom_smooth(method = "loess") + 
+  theme_bw() + 
+  facet_wrap(~predictors, scales = "free_y")
+```
+
+##### Influential observations
+
+We will check that there are no influential observations using Cook's distance as shown in @fig-mixedcooks.
+
+```{r mixedModelDiags_cooks}
+#| label: fig-mixedcooks
+#| fig-cap: "(MOCK FIGURE) Model diagnostic plot: Influential observations for the mixed logistic regression model."
+
+
+#calculate cooks distance using the sites
+#code taking too long for individual observations
+cooks_distance <- cooks.distance(influence(mixef_mod, group = "site"))
+
+#plot the cooks distance
+plot(cooks_distance)
+```
+
+##### Multicollinearity
+
+We will check that there there is no multicollinearity among the independent variables using the variance inflation factors.
+
+```{r mixedModelDiags_multicol}
+
+#calculate variance inflation factor
+vif(mixef_mod)
+```
+
+### Cox proportional hazards model
+
+A Cox proportional hazard regression model with a frailty term (using a gamma distribution) will be fitted for time to readmission or death within the 90-day follow-up period with factors for study arm, study period, interaction term for study arm and period, country, age, sex, co-morbidity and accounting for clustering within hospital facilities. The incorporation of a frailty term will account for unobserved heterogeneity and clustering within hospital facilities.
+
+The model will be summarised in tabular form, see @tbl-coxModel.
+
+```{r coxph_model}
+#| label: tbl-coxModel
+#| tbl-cap: "(MOCK TABLE) Summary of the Cox proportional hazards model."
+
+# Fit the Cox proportional hazards model
+mod_cox <- coxph(Surv(fu_time, event) ~ studyArm + studyPeriod + studyArm*studyPeriod + ageCentered + sex + comorb +
+                 strata(country) + frailty(site, distribution = "gamma"), data = pDat)
+
+# Extract coefficients and confidence intervals
+
+modResCox<-summary(mod_cox)$coefficients %>%
+  as.data.frame() %>%
+  mutate(
+    parameter=case_when(
+      rownames(summary(mod_cox)$coefficients)=="studyArmintervention"~"Study arm: Intervention",
+      rownames(summary(mod_cox)$coefficients)=="studyPeriodintervention"~"Study period: Intervention",
+      rownames(summary(mod_cox)$coefficients)=="studyArmintervention:stud"~"Study arm Intervention: Study period Intervention",
+      rownames(summary(mod_cox)$coefficients)=="ageCentered"~"Age",
+      rownames(summary(mod_cox)$coefficients)=="sexM"~"Sex: Male" ,
+      rownames(summary(mod_cox)$coefficients)=="comorbHivDiabetes"~"Comorbidity: Hiv + Diabetes",
+      rownames(summary(mod_cox)$coefficients)=="comorbHivDiabetesHyperten"~"Comorbidity: Hiv + Diabetes + Hypertension",
+      rownames(summary(mod_cox)$coefficients)=="comorbHivHypertension"~"Comorbidity: Hiv + Hypertension",
+      grepl(rownames(summary(mod_cox)$coefficients),pattern="frailty")~"Frailty (facility-level)"
+      )
+  )
+
+#modResCox <- modResCox %>% filter(parameter!="frailty(site, distribution")
+
+colnames(modResCox) <- c("coef", "Std.err", "robust se", "chisq", "DF", "p.value", "parameter")
+modResCox$coef <- exp(modResCox$coef)
+
+# summary table 
+modResCox %>%
+  dplyr::select(parameter, coef, Std.err, chisq, p.value) %>%
+  mutate_at(vars(coef, Std.err, chisq), ~ format(round(., 3), nsmall = 3)) %>%
+  mutate(p.value = ifelse(parameter != "(Intercept)" & p.value < 0.05,
+                          cell_spec(format(nsmall = 3, round(digits = 3, p.value)), bold = T),
+                          cell_spec(format(nsmall = 3, round(digits = 3, p.value)), bold = F))) %>%
+  kbl(row.names = FALSE, col.names = c("", "Hazard Ratio", "Std. error", "Chi-square statistic", "p-value"),
+        escape = FALSE) %>%
+  kable_styling(full_width = FALSE)
+```
+
+#### Model diagnostics
+
+The Cox proportional hazard (PH) model makes two key assumptions, namely that hazards for the different strata are proportional over time and that relationships with continuous covariates are linear. We will check these assumptions.
+
+##### PH assumption
+
+We will check the PH assumptions using the scaled Schoenfeld residuals, correlating these with time and testing for independence between residuals and time as shown in @fig-coxph.
+
+```{r coxModelDiags_PH}
+#| label: fig-coxph
+#| fig-cap: "(MOCK FIGURE) Model diagnostic plot: Proportional hazards assumption for the Cox regression model."
+
+# here we assume 90 days for participants not experiencing event
+explanatory <- c("studyArm","ageCentered", "sex", "comorb", "country")
+dependent_os  <- "Surv(fu_time, event)"
+pDat %>% 
+  coxphmulti(dependent_os, explanatory) %>% 
+  cox.zph() %>% 
+  {zph_result <<- .} %>% 
+  plot(var=5)
+
+zph_result
+```
+
+##### Linearity assumption
+
+We will check linearity through visual inspection of a plot of Martingale residuals against the continuous covariate, age, included in the model as shown in @fig-coxlinear.
+
+```{r coxModelDiags_linearity}
+#| label: fig-coxlinear
+#| fig-cap: "Checking Cox linearity assumption."
+
+ggcoxfunctional(Surv(fu_time, event) ~ ageCentered + log(age) + sqrt(age), data = pDat)
+```
+
+### Win Ratio approach
+
+Both the mixed logistic regression and the proportional hazard model with frailty term give equal weight to death and readmission within the composite endpoint of readmission-free survival. However, for study patients death is of obvious higher severity than readmission.
+
+The win ratio approach, described by @pocock_etal2012, building on work from @finkelsteinSchoenfeld1999, was developed to account for the difference in severity for multiple outcomes combined in a composite endpoint. The win ratio, similar to the time-to-event analysis, has the advantage of taking into account the timing of events and can also easily handle censoring, where participants drop out of the study.
+
+The win ratio, in its most simple form, proceeds in several steps:
+
+1.  Patients in the intervention and study arms are matched (usually based on a risk profile).
+
+2.  For each pair, outcomes and when they occurred are compared so that a 'winner' is determined. In the Multilink trial, there would be 5 possibilities:
+
+    -   The control arm participant died before the intervention arm participant -- this is a 'win' for the intervention arm.
+
+    -   The intervention arm participant died before the control arm participant -- this is a 'win' for the control arm.
+
+    -   There was no death and the control arm participant got readmitted before the intervention arm participant -- this is a 'win' for the intervention arm.
+
+    -   There was no death and the intervention arm participant got readmitted before the control arm participant -- this is a 'win' for the control arm.
+
+    -   None of the above -- this is a tie.
+
+3.  Finally, the number of wins for each arm ($N_W$ for the number of wins in the intervention arm and $N_L$ for the number of wins in the control arm) are tabulated and the ratio of the number of wins in the intervention arm to the number of wins in the control arm, $R_W = \frac{N_W}{N_L}$, is computed -- this is the **win ratio**. Alternatively, the proportion of wins for the intervention arm, $p_W=\frac{N_W}{N_W+N_L}$, can be computed. Formulas to derive confidence intervals and p-values for these statistics can be found in @pocock_etal2012.
+
+Note that implicit in the above is that if one participant is censored before his/her matched participant experiences an event, there is a tie, and likewise, if one participant is censored but only after their matched participant experiences an event, then the one who experienced the event 'loses'.
+
+The above procedure is known as the matched approach to the win ratio. An unmatched approach is possible where every participant in one arm is compared to every participant in the other arm, but the derivation of confidence intervals and p-values, described in @pocock_etal2012, relies on a computationally intensive bootstrap procedure. Similarly, as an in-between solution between the matched and unmatched approach, a stratified approach, where all participants within specific pre-defined strata are compared against each other is also possible and is described in @finkelsteinSchoenfeld1999.
+
+While the unmatched approach has some drawbacks (the win ratio is diluted closer towards 1 since there are many 'unfair' comparisons where participants with higher baseline risk are compared to participants with lower baseline risk and calculations of confidence intervals and p-values are more complex since the comparisons are not all independent), most of the subsequent literature, e.g. @luo_etal2015, @zhang_jeong2021, has focused on this approach as in many situations matching is not possible as no risk prediction model is available, there may not be a unique matching or there are observations that cannot be matched and hence have to be excluded from analysis.
+
+For Multilink, there are two key considerations:
+
+1.  We cannot use the matched approach as it is not immediately clear how to match pairs of participants.
+
+2.  Multilink uses a clustered design, which we need to account for in the analysis.
+
+To mitigate most of these issues, we could propose adopting the stratified approach, described in @finkelsteinSchoenfeld1999, meaning we compare every participant against every participant within specific, pre-determined strata. This will mean both fewer overall comparisons and also fewer unfair comparisons. We could propose to stratify by
+
+-   Country
+
+-   Diagnosis
+
+-   Sex
+
+-   Level of control
+
+However, @zhang_jeong2021 have recently developed the statistical theory for the unmatched win ratio approach for cluster randomised trials and that is the approach we will adopt. Specifically, we will use the *cWR* R package, available from <https://github.com/dee1008/cWR>, developed by the authors of @zhang_jeong2021. We will use data from both study periods and use participants from the intervention sites during the intervention period as intervention participants and the rest as control participants. Such that, there will be three controls for each intervention one.
+
+```{r winratio}
+#| label: tbl-win
+#| tbl-cap: "(MOCK TABLE) Summary of the win ratio analysis."
+    
+pDat <- pDat %>%
+  dplyr::mutate(
+    treatment=ifelse(studyArm=="intervention" & studyPeriod=="intervention",1,0),
+    T_death = as.numeric(difftime(death_date, date_at_entry, units = "days")),
+    T_death = ifelse(is.na(T_death), 90, T_death),
+    T_readmitted = as.numeric(difftime(readmitted_date, date_at_entry, units = "days")),
+    T_readmitted = ifelse(is.na(T_readmitted), 90, T_readmitted),
+    T_ltfu = as.numeric(difftime(dateOfLTFU, date_at_entry, units = "days")),
+    T_ltfu = ifelse(is.na(T_ltfu), 90, T_ltfu),
+    cluster=as.numeric(factor(site)),
+  )
+
+pDat <- pDat %>%
+  dplyr::mutate(
+    y1=pmin(T_readmitted,T_death, T_ltfu, na.rm = T),
+    y2=pmin(T_death, T_ltfu, na.rm = T)
+  )
+
+mod_wr <- with(pDat, WR.CRT(treatment=treatment, cluster=cluster, y1=y1, y2=y2, delta1=as.integer(readmitted), delta2=as.integer(deathAt90)))
+
+modWR <- data.frame(Estimate = exp(mod_wr$logWR), Std.err = mod_wr$se, z.value = mod_wr$z, LCI = exp(as.numeric(strsplit(gsub(pattern="[()]",replacement="", mod_wr$ci), ",")[[1]])[1]),UCI = exp(as.numeric(strsplit(gsub(pattern="[()]",replacement="", mod_wr$ci), ",")[[1]])[2]), p.value = mod_wr$p)
+
+
+modWR %>%
+  dplyr::select(Estimate,LCI, UCI, p.value) %>%
+  mutate_at(vars(Estimate, LCI, UCI), ~ format(round(., 3), nsmall = 3)) %>%
+  mutate(p.value = ifelse(p.value < 0.05,
+                          cell_spec(format(nsmall = 3, round(digits = 3, p.value)), bold = T),
+                          cell_spec(format(nsmall = 3, round(digits = 3, p.value)), bold = F))) %>%
+  kbl(row.names = FALSE, col.names = c("Estimated WR", "2.5%", "97.5%", "p-value"),
+        escape = FALSE) %>%
+  kable_styling(full_width = FALSE)
+```
+
+### Before/after and within-cluster analyses.
+
+We will fit before/after, within-cluster negative binomial models for the death and re-admission count outcome. We will fit one model for each cluster. For non-intervention clusters we do not expect to see an effect, but these models are run as controls.
+
+The results from these models will be summarized in tabular form, see @tbl-within. 
+
+```{r within}
+#| label: tbl-within
+#| tbl-cap: "(MOCK TABLE) Summary of the before/after, within-cluster negative binomial regression model for the composite outcome."
+
+# Fit a negative binomial model 
+nbid_mod <- glm.nb(event_count ~ studyPeriod + ageCentered + sex + comorb, data = pDat %>% filter(site=="Mw_H1"))
+
+modResNBid<-summary(nbid_mod)$coefficients %>%
+  as.data.frame() %>%
+  mutate(
+    parameter=case_when(
+      rownames(summary(nbid_mod)$coefficients)=="(Intercept)"~"(Intercept)",
+      rownames(summary(nbid_mod)$coefficients)=="studyPeriodintervention"~"Study period: Intervention",
+      rownames(summary(nbid_mod)$coefficients)=="ageCentered"~"Age",
+      rownames(summary(nbid_mod)$coefficients)=="sexM"~"Sex: Male" ,
+      rownames(summary(nbid_mod)$coefficients)=="comorbHivDiabetes"~"Comorbidity: Hiv + Diabetes",
+      rownames(summary(nbid_mod)$coefficients)=="comorbHivDiabetesHypertension"~"Comorbidity: Hiv + Diabetes + Hypertension",
+      rownames(summary(nbid_mod)$coefficients)=="comorbHivHypertension"~"Comorbidity: Hiv + Hypertension"
+      )
+  )
+
+
+
+colnames(modResNBid) <- c("Estimate", "Std.err", "z.value", "p.value", "parameter")
+
+modResNBid$Estimate <- exp(modResNBid$Estimate)
+modResNBid$Std.err <- exp(modResNBid$Std.err)
+
+# summary table
+modResNBid %>%
+  dplyr::select(parameter, Estimate, Std.err, z.value, p.value) %>%
+  mutate_at(vars(Estimate, Std.err, z.value), ~ format(round(., 3), nsmall = 3)) %>%
+  mutate(p.value = ifelse(parameter != "(Intercept)" & p.value < 0.05,
+                          cell_spec(format(nsmall = 3, round(digits = 3, p.value)), bold = T),
+                          cell_spec(format(nsmall = 3, round(digits = 3, p.value)), bold = F))) %>%
+  kbl(row.names = FALSE, col.names = c("", "Incident rate ratio", "Std. error", "Z statistic", "p-value"),
+        escape = FALSE) %>%
+  kable_styling(full_width = FALSE) %>%
+  footnote(symbol = "These are results for one cluster from Malawi in the intervention arm. These will be replicated for all clusters.")
+
+```
+
+
+### Analyses stratified by primary outcome.
+
+We will fit separate GLMM models for the death and re-admission. These models will include fixed factors for study arm, study period, interaction term for study arms and study period, country, age, sex, co-morbidity, and random factors for hospital facility and will use an unstructured variance-covariance matrix for the residuals.
+
+As for any GLMM, the integral over the random effects space needs to be approximated. We will use adaptive Gauss-Hermite quadrature with 25 quadrature points.
+
+The results from the GLMMs will be summarized in tabular form, see @tbl-mixedEffectsModelDeath and @tbl-mixedEffectsModelReadmission.
+
+#### Death
+
+```{r mixed_effect_model_death}
+#| label: tbl-mixedEffectsModelDeath
+#| tbl-cap: "(MOCK TABLE) Summary of the mixed-effects logistic regression model for the stratified primary outcome of death."
+
+# Fit the mixed-effects logistic regression model
+mixef_mod <- glmer(deathAt90 ~ studyArm + studyPeriod + studyArm*studyPeriod + ageCentered + sex + comorb + country + (1 | site),
+                   family = "binomial", data = pDat)
+
+modResMixef<-summary(mixef_mod)$coefficients %>%
+  as.data.frame() %>%
+  mutate(
+    parameter=case_when(
+      rownames(summary(mixef_mod)$coefficients)=="(Intercept)"~"(Intercept)",
+      rownames(summary(mixef_mod)$coefficients)=="studyArmintervention"~"Study arm: Intervention",
+      rownames(summary(mixef_mod)$coefficients)=="studyPeriodintervention"~"Study period: Intervention",
+      rownames(summary(mixef_mod)$coefficients)=="studyArmintervention:studyPeriodintervention"~"Study arm Intervention: Study period Intervention",
+      rownames(summary(mixef_mod)$coefficients)=="ageCentered"~"Age",
+      rownames(summary(mixef_mod)$coefficients)=="sexM"~"Sex: Male" ,
+      rownames(summary(mixef_mod)$coefficients)=="comorbHivDiabetes"~"Comorbidity: Hiv + Diabetes",
+      rownames(summary(mixef_mod)$coefficients)=="comorbHivDiabetesHypertension"~"Comorbidity: Hiv + Diabetes + Hypertension",
+      rownames(summary(mixef_mod)$coefficients)=="comorbHivHypertension"~"Comorbidity: Hiv + Hypertension",
+      rownames(summary(mixef_mod)$coefficients)=="countryTz"~"Country: Tanzania"
+      
+      )
+  )
+
+colnames(modResMixef) <- c("Estimate", "Std.err", "z.value", "p.value", "parameter")
+
+modResMixef$Estimate <- exp(modResMixef$Estimate)
+modResMixef$Std.err <- exp(modResMixef$Std.err)
+
+# summary table
+modResMixef %>%
+  dplyr::select(parameter, Estimate, Std.err, z.value, p.value) %>%
+  mutate_at(vars(Estimate, Std.err, z.value), ~ format(round(., 3), nsmall = 3)) %>%
+  mutate(p.value = ifelse(parameter != "(Intercept)" & p.value < 0.05,
+                          cell_spec(format(nsmall = 3, round(digits = 3, p.value)), bold = T),
+                          cell_spec(format(nsmall = 3, round(digits = 3, p.value)), bold = F))) %>%
+
+  kbl(row.names = FALSE, col.names = c("", "Odds ratio", "Std. error", "Z statistic", "p-value"),
+        escape = FALSE) %>%
+  kable_styling(full_width = FALSE)
+```
+
+#### Re-admission
+
+Patients who die without re-admission will be removed from this analysis.
+
+```{r mixed_effect_model_readmission}
+#| label: tbl-mixedEffectsModelReadmission
+#| tbl-cap: "(MOCK TABLE) Summary of the mixed-effects negative binomial regression model for the stratified primary outcome of re-admission."
+
+# Fit the mixed-effects logistic regression model
+mixef_mod <- glmer.nb(readmitted_count ~ studyArm + studyPeriod + studyArm*studyPeriod + ageCentered + sex + comorb + country + (1 | site), data = pDat %>% dplyr::filter(readmitted), control=glmerControl(optimizer="bobyqa"))
+
+modResMixef<-summary(mixef_mod)$coefficients %>%
+  as.data.frame() %>%
+  mutate(
+    parameter=case_when(
+      rownames(summary(mixef_mod)$coefficients)=="(Intercept)"~"(Intercept)",
+      rownames(summary(mixef_mod)$coefficients)=="studyArmintervention"~"Study arm: Intervention",
+      rownames(summary(mixef_mod)$coefficients)=="studyPeriodintervention"~"Study period: Intervention",
+      rownames(summary(mixef_mod)$coefficients)=="studyArmintervention:studyPeriodintervention"~"Study arm Intervention: Study period Intervention",
+      rownames(summary(mixef_mod)$coefficients)=="ageCentered"~"Age",
+      rownames(summary(mixef_mod)$coefficients)=="sexM"~"Sex: Male" ,
+      rownames(summary(mixef_mod)$coefficients)=="comorbHivDiabetes"~"Comorbidity: Hiv + Diabetes",
+      rownames(summary(mixef_mod)$coefficients)=="comorbHivDiabetesHypertension"~"Comorbidity: Hiv + Diabetes + Hypertension",
+      rownames(summary(mixef_mod)$coefficients)=="comorbHivHypertension"~"Comorbidity: Hiv + Hypertension",
+      rownames(summary(mixef_mod)$coefficients)=="countryTz"~"Country: Tanzania"
+      
+      )
+  )
+
+colnames(modResMixef) <- c("Estimate", "Std.err", "z.value", "p.value", "parameter")
+
+modResMixef$Estimate <- exp(modResMixef$Estimate)
+modResMixef$Std.err <- exp(modResMixef$Std.err)
+
+#modResMixef<-rbind(modResMixef,rep(NA,5))
+#modResMixef$Estimate[nrow(modResMixef)]<-unlist(summary(mixef_mod)$varcor)["site"]
+#modResMixef$parameter[nrow(modResMixef)]<-"Facility-level random intercept variance"
+#rownames(modResMixef)[nrow(modResMixef)]<-modResMixef$parameter[nrow(modResMixef)]
+
+# summary table
+modResMixef %>%
+  dplyr::select(parameter, Estimate, Std.err, z.value, p.value) %>%
+  mutate_at(vars(Estimate, Std.err, z.value), ~ format(round(., 3), nsmall = 3)) %>%
+  mutate(p.value = ifelse(parameter != "(Intercept)" & p.value < 0.05,
+                          cell_spec(format(nsmall = 3, round(digits = 3, p.value)), bold = T),
+                          cell_spec(format(nsmall = 3, round(digits = 3, p.value)), bold = F))) %>%
+  kbl(row.names = FALSE, col.names = c("", "Incident rate ratio", "Std. error", "Z statistic", "p-value"),
+        escape = FALSE) %>%
+  kable_styling(full_width = FALSE)
+```
+
+### Prevalence of undiagnosed multimorbidity
+
+```{r newcomorb} 
+#| label: tbl-newcomorb
+#| tbl-cap: "(MOCK TABLE) Prevalence of undiagnosed multimorbidity."
+
+pDat<-pDat %>%
+  dplyr::mutate(
+    date_of_comorb=sample(seq(as.Date("2023-02-01"), as.Date("2025-12-30"), by = "days"), n(), replace = TRUE)
+  ) %>%
+  dplyr::mutate(
+    new_comorb=ifelse(date_of_comorb>date_at_entry, 1,0)
+  )
+
+tab3 <- pDat
+
+
+
+tab3$studyArm <- factor(tab3$studyArm, levels = c("control", "intervention"),
+                        labels = c("Control", "Intervention"))
+
+tab3$new_comorb <- factor(tab3$new_comorb, levels = c(0,1),
+                        labels = c("No", "Yes"))
+
+
+labels <- list(
+  variables=list(new_comorb="Undiagnosed multimorbidity"),
+  groups=list("", "Baseline period", "Intervention period"))
+
+split.table<-split(tab3, ~ tab3$studyArm + tab3$studyPeriod)
+names(split.table)[names(split.table)=="Control.baseline"]<-"Control sites"
+names(split.table)[names(split.table)=="Control.intervention"]<-"Control sites"
+names(split.table)[names(split.table)=="Intervention.baseline"]<-"Intervention sites"
+names(split.table)[names(split.table)=="Intervention.intervention"]<-"Intervention sites"
+
+strata <- c(list(Total=tab3), split.table)
+
+#strata <- c(list(Total=tab3), split(tab3, tab3$studyArm))
+
+my.render.cat <- function(x) {
+  c("", sapply(stats.default(x), function(y) with(y,
+      sprintf("%d (%0.1f %%)", FREQ, PCT))))
+}
+
+
+table1(strata, labels, groupspan=c(1, 2, 2), render.categorical=my.render.cat)
+```
+
+
+
+### Measures of disease control (e.g. blood pressure, HBA1c, HIV viraemia).
+
+We will summarize the measures of disease control in a descriptive table, see @tbl-propCond. 
+
+We will then recode the measures of disease control to binary data and fit mixed effects logistic regression models to investigate if disease control improved during the intervention period in the intervention sites. These models will include fixed factors for study arm, study period, interaction term for study arm and period, country, age and sex, and random factors for hospital facility. The results will be summarized in tabular form, see @tbl-mixedEffectsBP, @tbl-mixedEffectsDB and @tbl-mixedEffectsHIV.
+
+```{r measures3}
+# BP
+
+pDat <- pDat %>%
+  mutate(
+    BP = case_when(
+      hypertension == 0 & runif(n()) < 0.05 ~ "Hypotension", # 5% probability for "Hypotension" among non-hypertensive
+      hypertension == 0 ~ "Hypertension with good control",
+      hypertension == 1 ~ sample(
+        c("Grade 1 hypertension", "Grade 2 hypertension", "Hypertensive crisis"),
+        size = n(),
+        replace = TRUE,
+        prob = c(0.6, 0.3, 0.1)
+      )
+    ),
+    blood_pressure_sys = case_when(
+      BP == "Hypotension" ~ sample(70:89, replace = T, size=n()),
+      BP == "Hypertension with good control" ~ sample(90:139, replace = T, size=n()),
+      BP == "Grade 1 hypertension" ~ sample(140:159, replace = T, size=n()),
+      BP == "Grade 2 hypertension" ~ sample(160:179, replace = T, size=n()),
+      BP == "Hypertensive crisis" ~ sample(180:200, replace = T, size=n())
+    ),
+    blood_pressure_dia = case_when(
+      BP == "Hypotension" ~ sample(40:59, replace = T, size=n()),
+      BP == "Hypertension with good control" ~ sample(60:89, replace = T, size=n()),
+      BP == "Grade 1 hypertension" ~ sample(90:99, replace = T, size=n()),
+      BP == "Grade 2 hypertension" ~ sample(100:119, replace = T, size=n()),
+      BP == "Hypertensive crisis" ~ sample(120:140, replace = T, size=n())
+    )
+  )
+
+
+#Diabetes
+pDat <- pDat %>%
+  mutate(
+    HbA1c = case_when(
+      diabetes == 0 ~ "Very good control", # Non-diabetic individuals assumed to have "Very good control"
+      diabetes == 1 ~ sample(
+        c("Good control", "Poor control", "Very poor control", "Hypoglycaemia"),
+        size = n(),
+        replace = TRUE,
+        prob = c(0.4, 0.3, 0.2, 0.1)
+      )
+    ),
+    blood_sugar = case_when(
+      HbA1c == "Hypoglycaemia" ~ sample(2.5:3.9, replace = T, size=n()),
+      HbA1c == "Very good control" ~ sample(4.0:6.4, replace = T, size=n()),
+      HbA1c == "Good control" ~ sample(6.5:6.9, replace = T, size=n()),
+      HbA1c == "Poor control" ~ sample(7.0:7.9, replace = T, size=n()),
+      HbA1c == "Very poor control" ~ sample(8.0:12.0, replace = T, size=n())
+    )
+  )
+
+#HIV
+pDat <- pDat %>%
+  mutate(
+    VL = case_when(
+      hiv == 0 ~ NA_character_,
+      hiv == 1 ~ sample(
+        c("New HIV diagnosis", "Undetectable viral load", "Controlled", "Uncontrolled", "Very poor control", "High infectivity"),
+        size = n(),
+        replace = TRUE,
+        prob = c(0.05, 0.4, 0.2, 0.15, 0.1, 0.1)
+      )
+    ),
+    viral_load = case_when(
+      hiv == "New HIV diagnosis" ~ sample(5000:10000, replace = T, size=n()),
+      hiv == "Undetectable viral load" ~ sample(1:49, replace = T, size=n()),
+      hiv == "Controlled" ~ sample(50:199, replace = T, size=n()),
+      hiv == "Uncontrolled" ~ sample(200:999, replace = T, size=n()),
+      hiv == "Very poor control" ~ sample(1000:9999, replace = T, size=n()),
+      hiv == "High infectivity" ~ sample(10000:200000, replace = T, size=n())
+    )
+  )
+
+```
+
+
+```{r measures4}
+#| label: tbl-propCond
+#| tbl-cap: "(MOCK TABLE) Proportions of measures of disease control."
+
+
+m_tab3 <- pDat
+
+m_tab3$studyArm <- factor(m_tab3$studyArm, levels = c("control", "intervention"),
+                        labels = c("Control", "Intervention"))
+
+m_tab3$BP <- factor(m_tab3$BP, levels = c("Hypotension", "Hypertension with good control","Grade 1 hypertension", "Grade 2 hypertension", "Hypertensive crisis"),
+                        labels = c("Hypotension", "Hypertension with good control","Grade 1 hypertension", "Grade 2 hypertension", "Hypertensive crisis"))
+
+m_tab3$HbA1c <- factor(m_tab3$HbA1c, levels = c("Hypoglycaemia", "Very good control","Good control", "Poor control", "Very poor control"),
+                        labels = c("Hypoglycaemia", "Very good control","Good control", "Poor control", "Very poor control"))
+
+m_tab3$VL <- factor(m_tab3$VL, levels = c("New HIV diagnosis", "Undetectable viral load","Controlled", "Uncontrolled", "Very poor control", "High infectivity"),
+                        labels = c("New HIV diagnosis", "Undetectable viral load","Controlled", "Uncontrolled", "Very poor control", "High infectivity"))
+
+
+labels <- list(
+  variables=list(BP="Hypertension control",
+                 HbA1c="Diabetes mellitus control",
+                 VL="HIV control"),
+  groups=list("", "Baseline period", "Intervention period"))
+
+split.table<-split(m_tab3, ~ m_tab3$studyArm + m_tab3$studyPeriod)
+names(split.table)[names(split.table)=="Control.baseline"]<-"Control sites"
+names(split.table)[names(split.table)=="Control.intervention"]<-"Control sites"
+names(split.table)[names(split.table)=="Intervention.baseline"]<-"Intervention sites"
+names(split.table)[names(split.table)=="Intervention.intervention"]<-"Intervention sites"
+
+strata <- c(list(Total=m_tab3), split.table)
+
+
+my.render.cat <- function(x) {
+  c("", sapply(stats.default(x), function(y) with(y,
+      sprintf("%d (%0.1f %%)", FREQ, PCT))))
+}
+
+
+table1(strata, labels, groupspan=c(1, 2, 2), render.categorical=my.render.cat, footnote = "*Those with missing HIV control values are those who are HIV negative.")
+```
+```{r measures_BP}
+#| label: tbl-mixedEffectsBP
+#| tbl-cap: "(MOCK TABLE) Summary of the mixed-effects logistic regression model for measures of Hypertension."
+
+pDat <- pDat%>%
+  dplyr::mutate(
+  BP_bin = ifelse(BP=="Hypertension with good control", 0,1),
+  HbA1c_bin = ifelse(HbA1c=="Very good control" | HbA1c=="Good control", 0,1),
+  VL_bin = ifelse(VL=="Undetectable viral load",0,1)
+  )
+
+# Fit the mixed-effects logistic regression model
+BP_mod <- glmer(BP_bin ~ studyArm + studyPeriod + studyArm*studyPeriod + ageCentered + sex + country + (1 | site), family = "binomial", data = pDat)
+
+modResBP<-summary(BP_mod)$coefficients %>%
+  as.data.frame() %>%
+  mutate(
+    parameter=case_when(
+      rownames(summary(BP_mod)$coefficients)=="(Intercept)"~"(Intercept)",
+      rownames(summary(BP_mod)$coefficients)=="studyArmintervention"~"Study arm: Intervention",
+      rownames(summary(BP_mod)$coefficients)=="studyPeriodintervention"~"Study period: Intervention",
+      rownames(summary(BP_mod)$coefficients)=="studyArmintervention:studyPeriodintervention"~"Study arm Intervention: Study period Intervention",
+      rownames(summary(BP_mod)$coefficients)=="ageCentered"~"Age",
+      rownames(summary(BP_mod)$coefficients)=="sexM"~"Sex: Male" ,
+      rownames(summary(BP_mod)$coefficients)=="countryTz"~"Country: Tanzania"
+      )
+  )
+
+
+
+colnames(modResBP) <- c("Estimate", "Std.err", "z.value", "p.value", "parameter")
+
+modResBP$Estimate <- exp(modResBP$Estimate)
+modResBP$Std.err <- exp(modResBP$Std.err)
+
+
+# summary table
+modResBP %>%
+  dplyr::select(parameter, Estimate, Std.err, z.value, p.value) %>%
+  mutate_at(vars(Estimate, Std.err, z.value), ~ format(round(., 3), nsmall = 3)) %>%
+  mutate(p.value = ifelse(parameter != "(Intercept)" & p.value < 0.05,
+                          cell_spec(format(nsmall = 3, round(digits = 3, p.value)), bold = T),
+                          cell_spec(format(nsmall = 3, round(digits = 3, p.value)), bold = F))) %>%
+  kbl(row.names = FALSE, col.names = c("", "Odds ratio", "Std. error", "Z statistic", "p-value"),
+        escape = FALSE) %>%
+  kable_styling(full_width = FALSE)
+```
+
+```{r measures_DB}
+#| label: tbl-mixedEffectsDB
+#| tbl-cap: "(MOCK TABLE) Summary of the mixed-effects logistic regression model for measures of Diabetes."
+
+
+# Fit the mixed-effects logistic regression model
+DB_mod <- glmer(HbA1c_bin ~ studyArm + studyPeriod + studyArm*studyPeriod + ageCentered + sex + country + (1 | site), family = "binomial", data = pDat)
+
+modResDB<-summary(DB_mod)$coefficients %>%
+  as.data.frame() %>%
+  mutate(
+    parameter=case_when(
+      rownames(summary(DB_mod)$coefficients)=="(Intercept)"~"(Intercept)",
+      rownames(summary(DB_mod)$coefficients)=="studyArmintervention"~"Study arm: Intervention",
+      rownames(summary(DB_mod)$coefficients)=="studyPeriodintervention"~"Study period: Intervention",
+      rownames(summary(DB_mod)$coefficients)=="studyArmintervention:studyPeriodintervention"~"Study arm Intervention: Study period Intervention",
+      rownames(summary(DB_mod)$coefficients)=="ageCentered"~"Age",
+      rownames(summary(DB_mod)$coefficients)=="sexM"~"Sex: Male" ,
+      rownames(summary(DB_mod)$coefficients)=="countryTz"~"Country: Tanzania"
+      )
+  )
+
+
+
+colnames(modResDB) <- c("Estimate", "Std.err", "z.value", "p.value", "parameter")
+
+modResDB$Estimate <- exp(modResDB$Estimate)
+modResDB$Std.err <- exp(modResDB$Std.err)
+
+
+# summary table
+modResDB %>%
+  dplyr::select(parameter, Estimate, Std.err, z.value, p.value) %>%
+  mutate_at(vars(Estimate, Std.err, z.value), ~ format(round(., 3), nsmall = 3)) %>%
+  mutate(p.value = ifelse(parameter != "(Intercept)" & p.value < 0.05,
+                          cell_spec(format(nsmall = 3, round(digits = 3, p.value)), bold = T),
+                          cell_spec(format(nsmall = 3, round(digits = 3, p.value)), bold = F))) %>%
+  kbl(row.names = FALSE, col.names = c("", "Odds ratio", "Std. error", "Z statistic", "p-value"),
+        escape = FALSE) %>%
+  kable_styling(full_width = FALSE)
+```
+```{r measures_HIV}
+#| label: tbl-mixedEffectsHIV
+#| tbl-cap: "(MOCK TABLE) Summary of the mixed-effects logistic regression model for measures of HIV."
+
+
+# Fit the mixed-effects logistic regression model
+VL_mod <- glmer(VL_bin ~ studyArm + studyPeriod + studyArm*studyPeriod + ageCentered + sex + country + (1 | site), family = "binomial", data = pDat)
+
+modResVL<-summary(VL_mod)$coefficients %>%
+  as.data.frame() %>%
+  mutate(
+    parameter=case_when(
+      rownames(summary(VL_mod)$coefficients)=="(Intercept)"~"(Intercept)",
+      rownames(summary(VL_mod)$coefficients)=="studyArmintervention"~"Study arm: Intervention",
+      rownames(summary(VL_mod)$coefficients)=="studyPeriodintervention"~"Study period: Intervention",
+      rownames(summary(VL_mod)$coefficients)=="studyArmintervention:studyPeriodintervention"~"Study arm Intervention: Study period Intervention",
+      rownames(summary(VL_mod)$coefficients)=="ageCentered"~"Age",
+      rownames(summary(VL_mod)$coefficients)=="sexM"~"Sex: Male" ,
+      rownames(summary(VL_mod)$coefficients)=="countryTz"~"Country: Tanzania"
+      )
+  )
+
+
+
+colnames(modResVL) <- c("Estimate", "Std.err", "z.value", "p.value", "parameter")
+
+modResVL$Estimate <- exp(modResVL$Estimate)
+modResVL$Std.err <- exp(modResVL$Std.err)
+
+
+# summary table
+modResVL %>%
+  dplyr::select(parameter, Estimate, Std.err, z.value, p.value) %>%
+  mutate_at(vars(Estimate, Std.err, z.value), ~ format(round(., 3), nsmall = 3)) %>%
+  mutate(p.value = ifelse(parameter != "(Intercept)" & p.value < 0.05,
+                          cell_spec(format(nsmall = 3, round(digits = 3, p.value)), bold = T),
+                          cell_spec(format(nsmall = 3, round(digits = 3, p.value)), bold = F))) %>%
+  kbl(row.names = FALSE, col.names = c("", "Odds ratio", "Std. error", "Z statistic", "p-value"),
+        escape = FALSE) %>%
+  kable_styling(full_width = FALSE)
+```
+
+### Prevalence of end-organ complications relevant to primary disease (e.g., stroke, myocardial infarction, chronic kidney disease).
+
+We will summarize the prevalence of end-organ complications relevant to primary disease in a descriptive table, see @tbl-diag1. 
+
+We will recode the end-organ complications to binary data, where those with end-organ complications are 1s and those without are 0s, and fit mixed effects logistic regression models to investigate if the complications improved during the intervention period in the intervention sites. These models will include fixed factors for study arm, study period, interaction term for study arm and period, country, age, sex and co-morbidity, and random factors for hospital facility. The results will be summarized in tabular form, see @tbl-mixedEffectsDiag.
+
+```{r diagnosis1}
+#| label: tbl-diag1
+#| tbl-cap: "(MOCK TABLE) Prevalence of end-organ complications."
+
+pDat <- pDat %>%
+  dplyr::mutate(
+    diagnosis=sample(0:4, n(), replace = T)
+  ) %>%
+  dplyr::mutate(
+    diagnosis=case_when(
+      diagnosis==0 ~ "None",
+      diagnosis==1 ~ "Stroke",
+      diagnosis==2 ~ "MI",
+      diagnosis==3 ~ "CKD",
+      diagnosis==4 ~ "Others"
+    )
+  )
+
+
+m_tab5 <- pDat
+
+m_tab5$studyArm <- factor(m_tab5$studyArm, levels = c("control", "intervention"),
+                        labels = c("Control", "Intervention"))
+
+m_tab5$diagnosis <- factor(m_tab5$diagnosis, levels = c("None", "Stroke","MI", "CKD", "Others"),
+                        labels = c("None", "Stroke","MI", "CKD", "Others"))
+
+labels <- list(
+  variables=list(diagnosis="New complications"),
+  groups=list("", "Baseline period", "Intervention period"))
+
+split.table<-split(m_tab5, ~ m_tab5$studyArm + m_tab5$studyPeriod)
+names(split.table)[names(split.table)=="Control.baseline"]<-"Control sites"
+names(split.table)[names(split.table)=="Control.intervention"]<-"Control sites"
+names(split.table)[names(split.table)=="Intervention.baseline"]<-"Intervention sites"
+names(split.table)[names(split.table)=="Intervention.intervention"]<-"Intervention sites"
+
+strata <- c(list(Total=m_tab5), split.table)
+
+
+my.render.cat <- function(x) {
+  c("", sapply(stats.default(x), function(y) with(y,
+      sprintf("%d (%0.1f %%)", FREQ, PCT))))
+}
+
+table1(strata, labels, groupspan=c(1, 2, 2), render.categorical=my.render.cat)
+```
+
+```{r diagnosis2}
+#| label: tbl-mixedEffectsDiag
+#| tbl-cap: "(MOCK TABLE) Summary of the mixed-effects logistic regression model for end-organ complications."
+
+
+pDat <- pDat%>%
+  dplyr::mutate(
+    diag_bin = ifelse(diagnosis=="None", 0, 1)
+  )
+
+# Fit the mixed-effects logistic regression model
+Diag_mod <- glmer(diag_bin ~ studyArm + studyPeriod + studyArm*studyPeriod + ageCentered + sex + +comorb + country + (1 | site), family = "binomial", data = pDat)
+
+modResDiag<-summary(Diag_mod)$coefficients %>%
+  as.data.frame() %>%
+  mutate(
+    parameter=case_when(
+      rownames(summary(Diag_mod)$coefficients)=="(Intercept)"~"(Intercept)",
+      rownames(summary(Diag_mod)$coefficients)=="studyArmintervention"~"Study arm: Intervention",
+      rownames(summary(Diag_mod)$coefficients)=="studyPeriodintervention"~"Study period: Intervention",
+      rownames(summary(Diag_mod)$coefficients)=="studyArmintervention:studyPeriodintervention"~"Study arm Intervention: Study period Intervention",
+      rownames(summary(Diag_mod)$coefficients)=="ageCentered"~"Age",
+      rownames(summary(Diag_mod)$coefficients)=="sexM"~"Sex: Male" ,
+      rownames(summary(Diag_mod)$coefficients)=="comorbHivDiabetes"~"Comorbidity: Hiv + Diabetes",
+      rownames(summary(Diag_mod)$coefficients)=="comorbHivDiabetesHypertension"~"Comorbidity: Hiv + Diabetes + Hypertension",
+      rownames(summary(Diag_mod)$coefficients)=="comorbHivHypertension"~"Comorbidity: Hiv + Hypertension",
+      rownames(summary(Diag_mod)$coefficients)=="countryTz"~"Country: Tanzania"
+      )
+  )
+
+
+
+colnames(modResDiag) <- c("Estimate", "Std.err", "z.value", "p.value", "parameter")
+
+modResDiag$Estimate <- exp(modResDiag$Estimate)
+modResDiag$Std.err <- exp(modResDiag$Std.err)
+
+
+# summary table
+modResDiag %>%
+  dplyr::select(parameter, Estimate, Std.err, z.value, p.value) %>%
+  mutate_at(vars(Estimate, Std.err, z.value), ~ format(round(., 3), nsmall = 3)) %>%
+  mutate(p.value = ifelse(parameter != "(Intercept)" & p.value < 0.05,
+                          cell_spec(format(nsmall = 3, round(digits = 3, p.value)), bold = T),
+                          cell_spec(format(nsmall = 3, round(digits = 3, p.value)), bold = F))) %>%
+  kbl(row.names = FALSE, col.names = c("", "Odds ratio", "Std. error", "Z statistic", "p-value"),
+        escape = FALSE) %>%
+  kable_styling(full_width = FALSE)
+```
+
+
+### Disability free survival at 90 days
+
+We will fit a GLMM model for disability free survival at 90 days. This model will include fixed factors for study arm, study period, interaction term for study period and study arm, country, age, sex, co-morbidity, and random factors for hospital facility and will use an unstructured variance-covariance matrix for the residuals.
+
+As for any GLMM, the integral over the random effects space needs to be approximated. We will use adaptive Gauss-Hermite quadrature with 25 quadrature points.
+
+The results from the GLMM will be summarized in tabular form, see @tbl-disab.
+
+
+```{r disability}
+#| label: tbl-disab
+#| tbl-cap: "(MOCK TABLE) Summary of the mixed-effects logistic regression model for disability free survival at 90 days."
+
+pDat <- pDat %>%
+  dplyr::mutate(
+    disability=ifelse(deathAt90, 0, sample(0:1, n(),replace = T))
+  )
+
+pDat$disability <- as.factor(pDat$disability)
+
+disab_mod <- glmer(disability ~ studyArm + studyPeriod + studyArm*studyPeriod + ageCentered + sex + comorb + country + (1 | site),
+                   family = "binomial", data = pDat)
+
+
+modResdisab<-summary(disab_mod)$coefficients %>%
+  as.data.frame() %>%
+  mutate(
+    parameter=case_when(
+      rownames(summary(disab_mod)$coefficients)=="(Intercept)"~"(Intercept)",
+      rownames(summary(disab_mod)$coefficients)=="studyArmintervention"~"Study arm: Intervention",
+      rownames(summary(disab_mod)$coefficients)=="studyPeriodintervention"~"Study period: Intervention",
+      rownames(summary(disab_mod)$coefficients)=="studyArmintervention:studyPeriodintervention"~"Study arm Intervention: Study period Intervention",
+      rownames(summary(disab_mod)$coefficients)=="ageCentered"~"Age",
+      rownames(summary(disab_mod)$coefficients)=="sexM"~"Sex: Male" ,
+      rownames(summary(disab_mod)$coefficients)=="comorbHivDiabetes"~"Comorbidity: Hiv + Diabetes",
+      rownames(summary(disab_mod)$coefficients)=="comorbHivDiabetesHypertension"~"Comorbidity: Hiv + Diabetes + Hypertension",
+      rownames(summary(disab_mod)$coefficients)=="comorbHivHypertension"~"Comorbidity: Hiv + Hypertension",
+      rownames(summary(disab_mod)$coefficients)=="countryTz"~"Country: Tanzania"
+      )
+  )
+
+colnames(modResdisab) <- c("Estimate", "Std.err", "z.value", "p.value", "parameter")
+
+modResdisab$Estimate <- exp(modResdisab$Estimate)
+modResdisab$Std.err <- exp(modResdisab$Std.err)
+
+
+# summary table
+modResdisab %>%
+  dplyr::select(parameter, Estimate, Std.err, z.value, p.value) %>%
+  mutate_at(vars(Estimate, Std.err, z.value), ~ format(round(., 3), nsmall = 3)) %>%
+  mutate(p.value = ifelse(parameter != "(Intercept)" & p.value < 0.05,
+                          cell_spec(format(nsmall = 3, round(digits = 3, p.value)), bold = T),
+                          cell_spec(format(nsmall = 3, round(digits = 3, p.value)), bold = F))) %>%
+  kbl(row.names = FALSE, col.names = c("", "Odds ratio", "Std. error", "Z statistic", "p-value"),
+        escape = FALSE) %>%
+  kable_styling(full_width = FALSE)
+```
+
+
+# List of figures
+
+@fig-precis: PRECIS-2 wheel assessment of the Multilink trial.
+
+@fig-sampSize-revCount: Sample size calculation graph; produced using https://clusterrcts.shinyapps.io/rshinyapp/. This calculation is for a mixed effects count model with variable cluster size and with a small sample adjustment
+
+@fig-sampSize-effectOfNumberAndSizeOfClusters: The effect of the number of clusters per arm and average cluster size on statistical power.
+
+@fig-simData_outcome: Composite re-admission / death outcome proportions by study arm for the simulated data at both time periods.
+
+@fig-consort: (MOCK FIGURE) CONSORT diagram for the Multilink trial.
+
+@fig-obsVsPredPlot: (MOCK FIGURE) Model diagnostic plot: Observed vs predicted values from the mixed negative binomial model.
+
+@fig-meanvar: (MOCK FIGURE) Model diagnostic plot: Mean-variance trend for the mixed negative binomial model.
+
+@fig-ordplot: (MOCK FIGURE) Model diagnostic plot: Ord plot to check appropriateness of negative binomial distribution for the mixed negative binomial model.
+
+@fig-nbcooks: (MOCK FIGURE) Model diagnostic plot: Influential observations for the mixed negative binomial model.
+
+@fig-mixedlinear: (MOCK FIGURE) Model diagnostic plot: Linearity assumption for the mixed logistic regression model.
+
+@fig-mixedcooks: (MOCK FIGURE) Model diagnostic plot: Influential observations for the mixed logistic regression model.
+
+@fig-coxph: (MOCK FIGURE) Model diagnostic plot: Proportional hazards assumption for the Cox regression model.
+
+@fig-coxlinear: Checking Cox linearity assumption.
+
+# List of tables
+
+@tbl-versionHistory: Version history listing major changes for each new version.
+
+@tbl-abbr: List of abbreviations.
+
+@tbl-precis: PRECIS-2 scoring rationale for the Multilink trial.
+
+@tbl-participantCharacteristics: (MOCK TABLE) Participant characteristics in both study periods.
+
+@tbl-mixedEffectsModel: (MOCK TABLE) Summary of the mixed-effects logistic regression model for the composite primary outcome of death / re-admission.
+
+@tbl-coxModel: (MOCK TABLE) Summary of the Cox proportional hazards model.
+
+@tbl-win: (MOCK TABLE) Summary of the win ratio analysis.
+
+@tbl-within: (MOCK TABLE) Summary of the before/after, within-cluster logistic regression model for the composite outcome.
+
+@tbl-mixedEffectsModelDeath: (MOCK TABLE) Summary of the mixed-effects logistic regression model for the stratified primary outcome of death.
+
+@tbl-mixedEffectsModelReadmission: (MOCK TABLE) Summary of the mixed-effects logistic regression model for the stratified primary outcome of re-admission.
+
+@tbl-newcomorb: (MOCK TABLE) Prevalence of undiagnosed multimorbidity.
+
+@tbl-propCond: (MOCK TABLE) Proportions of measures of disease control.
+
+@tbl-mixedEffectsBP: (MOCK TABLE) Summary of the mixed-effects logistic regression model for measures of Hypertension.
+
+@tbl-mixedEffectsDB: (MOCK TABLE) Summary of the mixed-effects logistic regression model for measures of Diabetes.
+
+@tbl-mixedEffectsHIV: (MOCK TABLE) Summary of the mixed-effects logistic regression model for measures of HIV.
+
+@tbl-diag1: (MOCK TABLE) Prevalence of end-organ complications in the baseline period.
+
+@tbl-mixedEffectsDiag: (MOCK TABLE) Summary of the mixed-effects logistic regression model for end-organ complications.
+
+@tbl-disab: (MOCK TABLE) Summary of the mixed-effects logistic regression model for disability free survival at 90 days.
+
+
+
+# Runtime information
+
+```{r}
+sessionInfo()
+```
+
+# References
